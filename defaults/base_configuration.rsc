@@ -46,8 +46,8 @@ set www disabled=yes
 
 # --- Interfaces ---
 
-/interface disable ether4,ether5,ether6,ether7,ether8,ether9,ether10,sfp1
-/interface bridge port disable numbers=2,3,4,5,6,7,9
+/interface disable ether5,ether6,ether7,ether8,ether9,ether10,sfp1
+/interface bridge port disable numbers=3,4,5,6,7,9
 
 # --- DHCP ---
 
