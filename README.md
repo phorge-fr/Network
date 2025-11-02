@@ -21,7 +21,7 @@ Requirements:
 2. Reset the router
 
 ```bash
-ssh user@ip /system/reset-configuration
+ssh admin@192.168.88.1 /system/reset-configuration
 ```
 
 > Make sure that the router loads the [Official default configuration](defaults/default_configuration.rsc) so you can SSH into the router 
