@@ -46,12 +46,12 @@ dns_records = [
   { name = "strong-owl.phorge", address = "10.0.0.4", type = "A" },
   { name = "silent-lion.phorge", address = "10.0.0.5", type = "A" },
   { name = "calm-rabbit.phorge", address = "10.0.0.6", type = "A" },
-  # { name = "dell0.phorge", address = "10.1.0.1", type = "A" },
-  # { name = "dell1.phorge", address = "10.1.0.2", type = "A" },
-  # { name = "dell2.phorge", address = "10.1.0.3", type = "A" },
-  # { name = "dell3.phorge", address = "10.1.0.4", type = "A" },
-  # { name = "dell4.phorge", address = "10.1.0.5", type = "A" },
-  # { name = "dell5.phorge", address = "10.1.0.6", type = "A" },
+  { name = "clever-lynx.phorge", address = "10.1.0.1", type = "A" },
+  { name = "gentle-fox.phorge", address = "10.1.0.2", type = "A" },
+  { name = "mighty-deer.phorge", address = "10.1.0.3", type = "A" },
+  { name = "brave-whale.phorge", address = "10.1.0.4", type = "A" },
+  { name = "mighty-rabbit.phorge", address = "10.1.0.5", type = "A" },
+  { name = "clever-panda.phorge", address = "10.1.0.6", type = "A" },
 ]
 
 
@@ -59,6 +59,7 @@ firewall_rules = [
   { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", place_before="5" , comment = "tofu;;; Allow TCP DNS from !LAN" },
   { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", place_before="5" , comment = "tofu;;; Allow UDP DNS from !LAN" },
   { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", place_before="11", comment = "tofu;;; Drop overlay network"},
+  { chain = "forward", action = "drop", in_interface_list = "PCI", out_interface_list = "PCI", place_before="11", comment = "tofu;;; Drop PCI to PCI" },
 ]
 
 firewall_address_lists = [
@@ -69,22 +70,22 @@ firewall_address_lists = [
 ]
 
 firewall_nat_rules = [
-  # { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "80", to_addresses = "10.0.0.10", to_ports = "80", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTP to FrontPlane LB Nginx" },
-  # { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "443", to_addresses = "10.0.0.10", to_ports = "443", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTPS to FrontPlane LB Nginx" },
+  { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "80", to_addresses = "10.0.0.10", to_ports = "8080", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTP to FrontPlane LB Nginx" },
+  { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "443", to_addresses = "10.0.0.10", to_ports = "8443", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTPS to FrontPlane LB Nginx" },
   # { chain = "dstnat", action = "dst-nat", protocol = "udp", dst_port = "9", to_addresses = "10.0.3.253", dst_address="10.0.3.0/24", comment = "tofu;;; Allow WoL from other networks to HPC" }, # Requires to manually create a static ARP entry such as: 10.0.3.253 -> ff:ff:ff:ff:ff:ff
 ]
 
-# interface_lists = [ 
-#   { name = "PCI"},
+interface_lists = [ 
+  { name = "PCI"},
 #   { name = "FrontPlane Nodes" },
 #   { name = "IaaS NS" },
 #   { name = "IaaS EW" },
 #   { name = "HPC Nodes" },
-# ]
+]
 
 interface_list_members = [
-  # { interface_list = "PCI", interface = "FrontPlane" },
-  # { interface_list = "PCI", interface = "IaaS-NS" },
+  { interface_list = "PCI", interface = "FrontPlane" },
+  { interface_list = "PCI", interface = "IaaS-EW" },
   # { interface_list = "PCI", interface = "IaaS-EW" },
   # { interface_list = "PCI", interface = "HPC" },
   # { interface_list = "PCI", interface = "SVLan" },
