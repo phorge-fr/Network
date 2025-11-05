@@ -17,24 +17,20 @@ ip_addresses = [
 ]
 
 ip_pools = [
-  { name = "FrontPlane", ranges = ["10.0.0.1-10.0.0.253"]},
-  { name = "IaaS-EW", ranges = ["10.1.0.1-10.1.0.253"]},
+  # { name = "FrontPlane", ranges = ["10.0.0.1-10.0.0.253"]},
+  # { name = "IaaS-EW", ranges = ["10.1.0.1-10.1.0.253"]},
   # { name = "Office", ranges = ["192.168.3.1-192.168.3.253"] },
   # { name = "SVLan", ranges = ["192.168.10.1-192.168.10.253"] },
 ]
 
 dhcp_server_networks = [
-  { address = "10.0.0.0/24", gateway = "10.0.0.254", dns_server = ["10.0.0.254"] },
-  { address = "10.1.0.0/24", gateway = "10.1.0.254", dns_server = ["10.1.0.254"] },
-  # { address = "192.168.3.0/24", gateway = "192.168.3.254", dns_server = ["192.168.3.254"]},
-  # { address = "192.168.10.0/24", gateway = "192.168.10.254", dns_server = ["192.168.10.254"]},
+  # { address = "10.0.0.0/24", gateway = "10.0.0.254", dns_server = ["10.0.0.254"] },
+  # { address = "10.1.0.0/24", gateway = "10.1.0.254", dns_server = ["10.1.0.254"] },
 ]
 
 dhcp_servers = [
-  { address_pool = "FrontPlane", interface = "FrontPlane", name = "FrontPlane" },
-  { address_pool = "IaaS-EW", interface = "IaaS-EW", name = "IaaS-EW" },
-  # { address_pool = "Office", interface = "Office", name = "Office" },
-  # { address_pool = "SVLan", interface = "SVLan", name = "SVLan" },
+  # { address_pool = "FrontPlane", interface = "FrontPlane", name = "FrontPlane" },
+  # { address_pool = "IaaS-EW", interface = "IaaS-EW", name = "IaaS-EW" },
 ]
 
 dns_records = [
@@ -59,6 +55,8 @@ firewall_rules = [
   { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", place_before="5" , comment = "tofu;;; Allow TCP DNS from !LAN" },
   { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", place_before="5" , comment = "tofu;;; Allow UDP DNS from !LAN" },
   { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", place_before="11", comment = "tofu;;; Drop overlay network"},
+  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="8444", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Prometheus"},
+  { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.11", dst_port="3100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane for Loki"},
   { chain = "forward", action = "drop", in_interface_list = "PCI", out_interface_list = "PCI", place_before="11", comment = "tofu;;; Drop PCI to PCI" },
 ]
 
