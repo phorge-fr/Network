@@ -219,3 +219,23 @@ variable "vxlan_vteps" {
   }))
   default = []  
 }
+
+variable "bgp_connections" {
+  description = "List of BGP connections"
+  type = list(object({
+    name           = string
+    as             = number
+    remote = object({
+      address = string
+      as      = number
+    })
+    local = object({
+      role    = string
+      address = string
+    })
+    connect = optional(bool)
+    listen  = optional(bool)
+    comment = optional(string, "tofu;;;")
+  }))
+  default = []
+}
