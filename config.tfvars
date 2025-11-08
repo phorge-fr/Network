@@ -90,3 +90,11 @@ interface_list_members = [
   # { interface_list = "PCI", interface = "HPC" },
   # { interface_list = "PCI", interface = "SVLan" },
 ]
+
+vxlan_interfaces = [ 
+  { name = "white2net", mtu = 1500, vni = 171, comment = "tofu;;; VXLAN to White2Net"}
+]
+
+vxlan_vteps = [
+  { interface = "white2net", remote_ip = "194.50.19.45" }
+]

@@ -224,3 +224,26 @@ resource "routeros_interface_list_member" "member" {
     routeros_interface_list.list
   ]
 }
+
+resource "routeros_interface_vxlan" "vxlan" {
+  for_each = { for vxlan in var.vxlan_interfaces : vxlan.name => vxlan }
+
+  name        = each.value.name
+  mtu         = lookup(each.value, "mtu", null)
+  vni         = each.value.vni
+  comment     = lookup(each.value, "comment", null)
+  disabled    = lookup(each.value, "disabled", null)
+}
+
+resource "routeros_interface_vxlan_vteps" "vxlan_vteps" {
+  for_each = { for vtep in var.vxlan_vteps : "${vtep.interface}-${vtep.remote_ip}" => vtep }
+
+  interface  = each.value.interface
+  remote_ip  = each.value.remote_ip
+  port       = lookup(each.value, "port", null)
+  comment    = lookup(each.value, "comment", null)
+
+  depends_on = [
+    routeros_interface_vxlan.vxlan
+  ]
+}

@@ -195,3 +195,27 @@ variable "interface_list_members" {
   }))
   default = []
 }
+
+variable "vxlan_interfaces" {
+  description = "List of VXLAN interfaces"
+  type = list(object({
+    name      = string
+    vni       = number
+    mtu       = optional(number)
+    comment   = optional(string, "tofu;;;")
+    disabled  = optional(bool)
+    hw        = optional(bool)
+  }))
+  default = []
+}
+
+variable "vxlan_vteps" {
+  description = "List of VXLAN VTEPs"
+  type = list(object({
+    interface = string
+    remote_ip = string
+    port      = optional(number)
+    comment   = optional(string, "tofu;;;")
+  }))
+  default = []  
+}
