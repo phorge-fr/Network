@@ -2,7 +2,7 @@ vlans = [
   # { interface = "bridge", name = "Office", vlan_id = 10 },
   { interface = "bridge", name = "FrontPlane", vlan_id = 20 },
   { interface = "bridge", name = "IaaS-EW", vlan_id = 30 },
-  # { interface = "bridge", name = "IaaS-EW", vlan_id = 40 },
+  { interface = "bridge", name = "IaaS-NS", vlan_id = 40 },
   # { interface = "bridge", name = "HPC", vlan_id = 50 },
   # { interface = "bridge", name = "SVLan", vlan_id = 100 },
 ]
@@ -11,7 +11,7 @@ ip_addresses = [
   # { interface = "Office", address = "192.168.3.254/24"},
   { interface = "FrontPlane", address = "10.0.0.254/24" },
   { interface = "IaaS-EW", address = "10.1.0.254/24" },
-  # { interface = "IaaS-EW", address = "10.2.2.254/24" },
+  { interface = "IaaS-NS", address = "10.2.0.254/24" },
   # { interface = "HPC", address = "10.0.3.254/24" },
   # { interface = "ether10", address = "192.168.10.254/24" },
 ]
@@ -85,7 +85,7 @@ interface_lists = [
 interface_list_members = [
   { interface_list = "PCI", interface = "FrontPlane" },
   { interface_list = "PCI", interface = "IaaS-EW" },
-  # { interface_list = "PCI", interface = "IaaS-EW" },
+  # { interface_list = "PCI", interface = "IaaS-NS" },
   # { interface_list = "PCI", interface = "HPC" },
   # { interface_list = "PCI", interface = "SVLan" },
 ]
