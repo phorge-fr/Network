@@ -56,10 +56,11 @@ firewall_rules = [
   { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", place_before="5" , comment = "tofu;;; Allow TCP DNS from !LAN" },
   { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", place_before="5" , comment = "tofu;;; Allow UDP DNS from !LAN" },
   { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", place_before="11", comment = "tofu;;; Drop overlay network"},
+  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="8443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Incus API"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="8444", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Prometheus Incus"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="9100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Prometheus Node Exporter"},
   { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.11", dst_port="3100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service Loki"},
-  { chain = "forward", action = "accept", in_interface = "FrontPlane", dst_address = "10.0.0.12", dst_port="8080", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service OpenFGA"},
+  { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.12", dst_port="8080", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service OpenFGA"},
   { chain = "forward", action = "drop", in_interface_list = "PCI", out_interface_list = "PCI", place_before="11", comment = "tofu;;; Drop PCI to PCI" },
 ]
 
@@ -87,7 +88,7 @@ interface_lists = [
 interface_list_members = [
   { interface_list = "PCI", interface = "FrontPlane" },
   { interface_list = "PCI", interface = "IaaS-EW" },
-  # { interface_list = "PCI", interface = "IaaS-NS" },
+  { interface_list = "PCI", interface = "IaaS-NS" },
   # { interface_list = "PCI", interface = "HPC" },
   # { interface_list = "PCI", interface = "SVLan" },
 ]
