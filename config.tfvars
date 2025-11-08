@@ -34,6 +34,7 @@ dhcp_servers = [
 ]
 
 dns_records = [
+  { name = "core-gw0.phorge", address = "192.168.2.254", type = "A" },
   { name = "fp-sw0.phorge", address = "192.168.2.253", type = "A" },
   { name = "iaas-sw0.phorge", address = "192.168.2.252", type = "A" },
   { name = "quiet-lion.phorge", address = "10.0.0.1", type = "A" },
