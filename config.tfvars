@@ -1,36 +1,33 @@
 vlans = [
-  # { interface = "bridge", name = "Office", vlan_id = 10 },
   { interface = "bridge", name = "FrontPlane", vlan_id = 20 },
   { interface = "bridge", name = "IaaS-EW", vlan_id = 30 },
   { interface = "bridge", name = "IaaS-NS", vlan_id = 40 },
-  # { interface = "bridge", name = "HPC", vlan_id = 50 },
-  # { interface = "bridge", name = "SVLan", vlan_id = 100 },
+  { interface = "bridge", name = "HPC", vlan_id = 50 },
 ]
 
 ip_addresses = [
-  # { interface = "Office", address = "192.168.3.254/24"},
   { interface = "FrontPlane", address = "10.0.0.254/24" },
   { interface = "IaaS-EW", address = "10.1.0.254/24" },
   { interface = "IaaS-NS", address = "10.2.0.254/24" },
-  # { interface = "HPC", address = "10.0.3.254/24" },
-  # { interface = "ether10", address = "192.168.10.254/24" },
+  { interface = "HPC", address = "10.5.0.254/24" },
 ]
 
 ip_pools = [
   # { name = "FrontPlane", ranges = ["10.0.0.1-10.0.0.253"]},
   # { name = "IaaS-EW", ranges = ["10.1.0.1-10.1.0.253"]},
-  # { name = "Office", ranges = ["192.168.3.1-192.168.3.253"] },
-  # { name = "SVLan", ranges = ["192.168.10.1-192.168.10.253"] },
+  { name = "HPC", ranges = ["10.5.0.1-10.5.0.253"] },
 ]
 
 dhcp_server_networks = [
   # { address = "10.0.0.0/24", gateway = "10.0.0.254", dns_server = ["10.0.0.254"] },
   # { address = "10.1.0.0/24", gateway = "10.1.0.254", dns_server = ["10.1.0.254"] },
+  { address = "10.5.0.0/24", gateway = "10.5.0.254", dns_server = ["10.5.0.254"] },
 ]
 
 dhcp_servers = [
   # { address_pool = "FrontPlane", interface = "FrontPlane", name = "FrontPlane" },
   # { address_pool = "IaaS-EW", interface = "IaaS-EW", name = "IaaS-EW" },
+  { address_pool = "HPC", interface = "HPC", name = "HPC" },
 ]
 
 dns_records = [
@@ -89,8 +86,7 @@ interface_list_members = [
   { interface_list = "PCI", interface = "FrontPlane" },
   { interface_list = "PCI", interface = "IaaS-EW" },
   { interface_list = "PCI", interface = "IaaS-NS" },
-  # { interface_list = "PCI", interface = "HPC" },
-  # { interface_list = "PCI", interface = "SVLan" },
+  { interface_list = "PCI", interface = "HPC" },
 ]
 
 vxlan_interfaces = [ 
