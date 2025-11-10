@@ -46,6 +46,7 @@ dns_records = [
   { name = "brave-whale.phorge", address = "10.1.0.4", type = "A" },
   { name = "mighty-rabbit.phorge", address = "10.1.0.5", type = "A" },
   { name = "clever-panda.phorge", address = "10.1.0.6", type = "A" },
+  { name = "hpc0.phorge", address = "10.5.0.1", type = "A" },
 ]
 
 
