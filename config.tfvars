@@ -15,19 +15,19 @@ ip_addresses = [
 ip_pools = [
   # { name = "FrontPlane", ranges = ["10.0.0.1-10.0.0.253"]},
   # { name = "IaaS-EW", ranges = ["10.1.0.1-10.1.0.253"]},
-  { name = "HPC", ranges = ["10.5.0.1-10.5.0.253"] },
+  # { name = "HPC", ranges = ["10.5.0.1-10.5.0.253"] },
 ]
 
 dhcp_server_networks = [
   # { address = "10.0.0.0/24", gateway = "10.0.0.254", dns_server = ["10.0.0.254"] },
   # { address = "10.1.0.0/24", gateway = "10.1.0.254", dns_server = ["10.1.0.254"] },
-  { address = "10.5.0.0/24", gateway = "10.5.0.254", dns_server = ["10.5.0.254"] },
+  # { address = "10.5.0.0/24", gateway = "10.5.0.254", dns_server = ["10.5.0.254"] },
 ]
 
 dhcp_servers = [
   # { address_pool = "FrontPlane", interface = "FrontPlane", name = "FrontPlane" },
   # { address_pool = "IaaS-EW", interface = "IaaS-EW", name = "IaaS-EW" },
-  { address_pool = "HPC", interface = "HPC", name = "HPC" },
+  # { address_pool = "HPC", interface = "HPC", name = "HPC" },
 ]
 
 dns_records = [
