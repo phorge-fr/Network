@@ -60,6 +60,7 @@ firewall_rules = [
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="9100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for Prometheus Node Exporter"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="8000", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for Prometheus GPU Exporter"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="8080", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for Prometheus Cadvisor Exporter"},
+  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-NS", dst_port="8100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-NS for Bluemap"},
   { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.11", dst_port="3100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service Loki"},
   { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.12", dst_port="8080", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service OpenFGA"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", dst_address = "10.5.0.253", dst_port="9", protocol = "udp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC WoL"},
