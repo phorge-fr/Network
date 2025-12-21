@@ -20,6 +20,7 @@ variable "vlans" {
     interface = string
     name      = string
     vlan_id   = number
+    mtu       = optional(number)
     comment   = optional(string, "tofu;;;")
   }))
   default = []
@@ -165,6 +166,7 @@ variable "firewall_nat_rules" {
   type = list(object({
     action            = string
     chain             = string
+    src_address       = optional(string)
     dst_address       = optional(string)
     out_interface     = optional(string)
     in_interface_list = optional(string)
@@ -238,4 +240,35 @@ variable "bgp_connections" {
     comment = optional(string, "tofu;;;")
   }))
   default = []
+}
+
+variable "veths" {
+  description = "List of veth interfaces"
+  type = list(object({
+    name    = string
+    address = list(string)
+    gateway = string
+    comment = optional(string, "tofu;;;")
+  }))
+  default = []
+}
+
+variable "bridges" {
+  description = "List of bridge interfaces"
+  type = list(object({
+    name    = string
+    comment = optional(string, "tofu;;;")
+    ports   = optional(list(string), [])
+  }))
+  default = []
+}
+
+variable "files" {
+  description = "List of files to upload to the RouterOS device"
+  type = list(object({
+    name        = string
+    contents    = string
+  }))
+  default = []
+  
 }

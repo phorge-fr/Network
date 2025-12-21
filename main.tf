@@ -1,13 +1,14 @@
-resource "routeros_interface_vlan" "interface_vlan" {
+resource "routeros_interface_vlan" "vlans" {
   for_each = { for v in var.vlans : "${v.interface}-${v.vlan_id}" => v }
 
   interface = each.value.interface
   name      = each.value.name
   vlan_id   = each.value.vlan_id
+  mtu       = lookup(each.value, "mtu", null)
   comment   = lookup(each.value, "comment", null)
 }
 
-resource "routeros_ip_address" "ip_address" {
+resource "routeros_ip_address" "ip_addresses" {
   for_each = { for ip in var.ip_addresses : "${ip.interface}-${ip.address}" => ip }
 
   interface = each.value.interface
@@ -15,11 +16,13 @@ resource "routeros_ip_address" "ip_address" {
   network   = lookup(each.value, "network", null)
   comment   = lookup(each.value, "comment", null)
   depends_on = [
-    routeros_interface_vlan.interface_vlan
+    routeros_interface_vlan.vlans,
+    routeros_interface_bridge.bridges,
+    routeros_interface_vxlan.vxlans
    ]
 }
 
-resource "routeros_ip_pool" "pool" {
+resource "routeros_ip_pool" "dhcp_pools" {
     for_each = { for pool in var.ip_pools : pool.name => pool }
     
     name        = each.value.name
@@ -27,7 +30,7 @@ resource "routeros_ip_pool" "pool" {
     comment     = lookup(each.value, "comment", null)
 }
 
-resource "routeros_ip_dhcp_server_network" "dhcp_network" {
+resource "routeros_ip_dhcp_server_network" "dhcp_networks" {
   for_each = { for net in var.dhcp_server_networks : net.address => net }
 
   address     = each.value.address
@@ -36,7 +39,7 @@ resource "routeros_ip_dhcp_server_network" "dhcp_network" {
   comment     = lookup(each.value, "comment", null)
 }
 
-resource "routeros_ip_dhcp_server" "server" {
+resource "routeros_ip_dhcp_server" "dhcp_servers" {
   for_each = { for s in var.dhcp_servers : s.name => s }
 
   address_pool = each.value.address_pool
@@ -44,13 +47,13 @@ resource "routeros_ip_dhcp_server" "server" {
   name         = each.value.name
   comment      = lookup(each.value, "comment", null)
   depends_on = [ 
-    routeros_ip_pool.pool,
-    routeros_ip_dhcp_server_network.dhcp_network,
-    routeros_ip_address.ip_address
+    routeros_ip_pool.dhcp_pools,
+    routeros_ip_dhcp_server_network.dhcp_networks,
+    routeros_ip_address.ip_addresses
   ]
 }
 
-resource "routeros_ip_dns_record" "name_record" {
+resource "routeros_ip_dns_record" "name_records" {
   for_each = { for record in var.dns_records : "${record.name}-${record.address}" => record }
 
   name    = each.value.name
@@ -60,7 +63,7 @@ resource "routeros_ip_dns_record" "name_record" {
   
 }
 
-resource "routeros_ip_firewall_filter" "rule" {
+resource "routeros_ip_firewall_filter" "firewall_rules" {
   for_each = { for rule in var.firewall_rules : "${rule.chain}-${rule.action}-${rule.priority != null ? rule.priority : ""}-${rule.comment != null ? rule.comment : ""}-${rule.dst_address != null ? rule.dst_address : ""}-${rule.src_address != null ? rule.src_address : ""}" => rule }
 
   action = each.value.action
@@ -129,7 +132,7 @@ resource "routeros_ip_firewall_filter" "rule" {
   ttl                    = lookup(each.value, "ttl", null)
 }
 
-resource "routeros_ip_firewall_addr_list" "list" {
+resource "routeros_ip_firewall_addr_list" "address_lists" {
   for_each = { for list in var.firewall_address_lists : list.list => list }
 
   list        = each.value.list
@@ -138,7 +141,7 @@ resource "routeros_ip_firewall_addr_list" "list" {
   disabled    = lookup(each.value, "disabled", false)
 }
 
-resource "routeros_ip_firewall_nat" "rule" {
+resource "routeros_ip_firewall_nat" "nat_rules" {
   for_each = { for rule in var.firewall_nat_rules : 
     "${rule.chain}-${rule.action}-${rule.out_interface != null ? rule.out_interface : ""}-${rule.comment != null ? rule.comment : ""}" => rule 
   }
@@ -206,14 +209,14 @@ resource "routeros_ip_firewall_nat" "rule" {
   ttl                    = lookup(each.value, "ttl", null)
 }
 
-resource "routeros_interface_list" "list" {
+resource "routeros_interface_list" "interface_lists" {
   for_each = { for list in var.interface_lists : list.name => list }
 
   name        = each.value.name
   comment     = lookup(each.value, "comment", null)
 }
 
-resource "routeros_interface_list_member" "member" {
+resource "routeros_interface_list_member" "interface_list_members" {
   for_each = { for member in var.interface_list_members : "${member.interface_list}-${member.interface}" => member }
 
   list       = each.value.interface_list
@@ -221,11 +224,11 @@ resource "routeros_interface_list_member" "member" {
   comment    = lookup(each.value, "comment", null)
 
   depends_on = [
-    routeros_interface_list.list
+    routeros_interface_list.interface_lists
   ]
 }
 
-resource "routeros_interface_vxlan" "vxlan" {
+resource "routeros_interface_vxlan" "vxlans" {
   for_each = { for vxlan in var.vxlan_interfaces : vxlan.name => vxlan }
 
   name        = each.value.name
@@ -244,11 +247,11 @@ resource "routeros_interface_vxlan_vteps" "vxlan_vteps" {
   comment    = lookup(each.value, "comment", null)
 
   depends_on = [
-    routeros_interface_vxlan.vxlan
+    routeros_interface_vxlan.vxlans
   ]
 }
 
-resource "routeros_routing_bgp_connection" "bgp_connection" {
+resource "routeros_routing_bgp_connection" "bgp_connections" {
   for_each = { for conn in var.bgp_connections : "${conn.name}-${conn.remote.address}" => conn }
 
   name               = each.value.name
@@ -264,4 +267,33 @@ resource "routeros_routing_bgp_connection" "bgp_connection" {
   connect            = each.value.connect
   listen             = each.value.listen
   comment            = lookup(each.value, "comment", null)
+}
+
+resource "routeros_interface_veth" "veths" {
+  for_each = { for veth in var.veths : veth.name => veth }
+  name       = each.value.name
+  address    = each.value.address
+  gateway    = each.value.gateway
+  comment    = lookup(each.value, "comment", null)
+}
+
+resource "routeros_interface_bridge" "bridges" {
+  for_each = { for b in var.bridges : b.name => b }
+  name           = each.value.name
+  comment        = lookup(each.value, "comment", null)
+}
+
+resource "routeros_interface_bridge_port" "bridge_ports" {
+  for_each = { for bp in flatten([for b in var.bridges : [for p in b.ports : { bridge = b.name, port = p }]]) : "${bp.bridge}-${bp.port}" => bp }
+  bridge    = each.value.bridge
+  interface = each.value.port
+
+  depends_on = [ routeros_interface_bridge.bridges ]
+}
+
+resource "routeros_file" "files" {
+  for_each = { for f in var.files : f.name => f }
+
+  name        = each.value.name
+  contents    = file(each.value.contents)
 }
