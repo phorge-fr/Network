@@ -62,7 +62,6 @@ firewall_rules = [
   { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", place_before="5" , comment = "tofu;;; Allow TCP DNS from !LAN" },
   { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", place_before="5" , comment = "tofu;;; Allow UDP DNS from !LAN" },
   { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", place_before="11", comment = "tofu;;; Drop overlay network"},
-  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="8443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Incus API"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="8444", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Prometheus Incus"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="9100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Prometheus Node Exporter"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="9100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for Prometheus Node Exporter"},
@@ -72,6 +71,10 @@ firewall_rules = [
   { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.11", dst_port="3100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service Loki"},
   { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.12", dst_port="8080", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service OpenFGA"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", dst_address = "10.5.0.253", dst_port="9", protocol = "udp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC WoL"},
+  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "IaaS-EW", dst_port="8443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow HAproxy container to IaaS Nodes"},
+  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "FrontPlane", dst_address = "10.0.0.10", dst_port="80", protocol = "tcp", place_before="11", comment = "tofu;;; Allow HAproxy container to FrontPlane Ingress HTTP"},
+  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "FrontPlane", dst_address = "10.0.0.10", dst_port="443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow HAproxy container to FrontPlane Ingress HTTPS"},
+  { chain = "forward", action = "drop", in_interface_list = "Containers", out_interface_list = "PCI", comment = "tofu;;; Drop Containers to PCI" },
   { chain = "forward", action = "drop", in_interface_list = "PCI", out_interface_list = "PCI", comment = "tofu;;; Drop PCI to PCI" },
 ]
 
@@ -91,9 +94,10 @@ firewall_nat_rules = [
 
 interface_lists = [ 
   { name = "PCI"},
+  { name = "Containers"},
 #   { name = "FrontPlane Nodes" },
 #   { name = "IaaS NS" },
-#   { name = "IaaS EW" },
+#   { name = "IaaS-Nodes" },
 #   { name = "HPC Nodes" },
 ]
 
@@ -102,6 +106,8 @@ interface_list_members = [
   { interface_list = "PCI", interface = "IaaS-EW" },
   { interface_list = "PCI", interface = "IaaS-NS" },
   { interface_list = "PCI", interface = "HPC" },
+  { interface_list = "Containers", interface = "containers" },
+  { interface_list = "Containers", interface = "veth1" },
 ]
 
 vxlan_interfaces = [ 
