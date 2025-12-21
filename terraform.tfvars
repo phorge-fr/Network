@@ -91,23 +91,9 @@ firewall_nat_rules = [
   { chain = "dstnat", action = "dst-nat", protocol = "udp", dst_port = "9", to_addresses = "10.5.0.253", dst_address="10.5.0.0/24", comment = "tofu;;; Allow WoL from other networks to HPC" }, # Requires to manually create a static ARP entry such as: 10.5.0.253 -> ff:ff:ff:ff:ff:ff
   { chain = "srcnat", action = "masquerade", src_address = "172.17.0.0/24", comment = "tofu;;; Masquerade outbound traffic for docker" },
 ]
-
 interface_lists = [ 
-  { name = "PCI"},
-  { name = "Containers"},
-#   { name = "FrontPlane Nodes" },
-#   { name = "IaaS NS" },
-#   { name = "IaaS-Nodes" },
-#   { name = "HPC Nodes" },
-]
-
-interface_list_members = [
-  { interface_list = "PCI", interface = "FrontPlane" },
-  { interface_list = "PCI", interface = "IaaS-EW" },
-  { interface_list = "PCI", interface = "IaaS-NS" },
-  { interface_list = "PCI", interface = "HPC" },
-  { interface_list = "Containers", interface = "containers" },
-  { interface_list = "Containers", interface = "veth1" },
+  { name = "PCI", members = [ "FrontPlane", "IaaS-EW", "IaaS-NS", "HPC" ] },
+  { name = "Containers", members = [ "containers", "veth1" ] },
 ]
 
 vxlan_interfaces = [ 

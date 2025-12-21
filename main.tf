@@ -1,3 +1,7 @@
+locals {
+  interface_lists_map = { for list in var.interface_lists : list.name => list }
+}
+
 resource "routeros_interface_vlan" "vlans" {
   for_each = { for v in var.vlans : "${v.interface}-${v.vlan_id}" => v }
 
@@ -217,11 +221,11 @@ resource "routeros_interface_list" "interface_lists" {
 }
 
 resource "routeros_interface_list_member" "interface_list_members" {
-  for_each = { for member in var.interface_list_members : "${member.interface_list}-${member.interface}" => member }
+  for_each = { for member in flatten([for list in var.interface_lists : [for p in list.members : { interface_list = list.name, interface = p }]]) : "${member.interface_list}-${member.interface}" => member }
 
   list       = each.value.interface_list
   interface  = each.value.interface
-  comment    = lookup(each.value, "comment", null)
+  comment    = lookup(local.interface_lists_map[each.value.interface_list], "comment", null)
 
   depends_on = [
     routeros_interface_list.interface_lists

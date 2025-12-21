@@ -184,16 +184,7 @@ variable "interface_lists" {
   type = list(object({
     name    = string
     comment = optional(string, "tofu;;;")
-  }))
-  default = []
-}
-
-variable "interface_list_members" {
-  description = "List of interface list members"
-  type = list(object({
-    interface_list = string
-    interface      = string
-    comment        = optional(string, "tofu;;;")
+    members = optional(list(string), [])
   }))
   default = []
 }
