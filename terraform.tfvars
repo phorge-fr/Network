@@ -1,8 +1,8 @@
 vlans = [
-  { interface = "bridge", name = "FrontPlane", vlan_id = 20 },
-  { interface = "bridge", name = "IaaS-EW", vlan_id = 30 },
-  { interface = "bridge", name = "IaaS-NS", vlan_id = 40 },
-  { interface = "bridge", name = "HPC", vlan_id = 50 },
+  { interface = "bridge", name = "FrontPlane", vlan_id = 20, mtu = 8152 },
+  { interface = "bridge", name = "IaaS-EW", vlan_id = 30, mtu = 8152 },
+  { interface = "bridge", name = "IaaS-NS", vlan_id = 40, mtu = 8152 },
+  { interface = "bridge", name = "HPC", vlan_id = 50, mtu = 8152 },
 ]
 
 ip_addresses = [
@@ -10,6 +10,7 @@ ip_addresses = [
   { interface = "IaaS-EW", address = "10.1.0.254/24" },
   { interface = "IaaS-NS", address = "10.2.0.254/24" },
   { interface = "HPC", address = "10.5.0.254/24" },
+  { interface = "containers", address = "172.17.0.1/24"}
 ]
 
 ip_pools = [
@@ -57,15 +58,14 @@ firewall_rules = [
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="8443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Incus API"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="8444", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Prometheus Incus"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="9100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Prometheus Node Exporter"},
-  # { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="8555", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Incus S3"}, # Infrastucture not stable enough
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="9100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for Prometheus Node Exporter"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="8000", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for Prometheus GPU Exporter"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="8080", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for Prometheus Cadvisor Exporter"},
-  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-NS", dst_port="8100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-NS for Bluemap"},
+  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-NS", dst_address = "10.3.0.1", dst_port="8100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-NS for Bluemap"},
   { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.11", dst_port="3100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service Loki"},
   { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.12", dst_port="8080", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service OpenFGA"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", dst_address = "10.5.0.253", dst_port="9", protocol = "udp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC WoL"},
-  { chain = "forward", action = "drop", in_interface_list = "PCI", out_interface_list = "PCI", place_before="11", comment = "tofu;;; Drop PCI to PCI" },
+  { chain = "forward", action = "drop", in_interface_list = "PCI", out_interface_list = "PCI", comment = "tofu;;; Drop PCI to PCI" },
 ]
 
 firewall_address_lists = [
@@ -79,6 +79,7 @@ firewall_nat_rules = [
   { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "80", to_addresses = "10.0.0.10", to_ports = "8080", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTP to FrontPlane LB Nginx" },
   { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "443", to_addresses = "10.0.0.10", to_ports = "8443", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTPS to FrontPlane LB Nginx" },
   { chain = "dstnat", action = "dst-nat", protocol = "udp", dst_port = "9", to_addresses = "10.5.0.253", dst_address="10.5.0.0/24", comment = "tofu;;; Allow WoL from other networks to HPC" }, # Requires to manually create a static ARP entry such as: 10.5.0.253 -> ff:ff:ff:ff:ff:ff
+  { chain = "srcnat", action = "masquerade", src_address = "172.17.0.0/24", comment = "tofu;;; Masquerade outbound traffic for docker" },
 ]
 
 interface_lists = [ 
@@ -112,3 +113,15 @@ bgp_connections = [
   { as = 65535, comment = "tofu;;; IaaS mighty-rabbit", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "mighty-rabbit", remote = { address = "10.1.0.5" , as = 65535 } },
   { as = 65535, comment = "tofu;;; IaaS clever-panda", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "clever-panda", remote = { address = "10.1.0.6" , as = 65535 } }
 ]
+
+veths = [ {
+  name = "veth1", address = ["172.17.0.2/24"], gateway = "172.17.0.1", comment = "tofu;;; Containers Veth"
+} ]
+
+bridges = [ {
+  name = "containers", ports = ["veth1"], comment = "tofu;;;  Containers Bridge"
+} ]
+
+files = [ {
+  name = "usb1/haproxy-etc/test.cfg", contents = "templates/haproxy.cfg"
+} ]
