@@ -272,3 +272,43 @@ variable "files" {
   default = []
   
 }
+
+variable "container_mounts" {
+  description = "List of container mounts"
+  type = list(object({
+    name           = string
+    src            = string
+    dst            = string
+  }))
+  default = []
+  
+}
+
+variable "container_config" {
+  description = "Container configurations"
+  type = object({
+    registry_url = optional(string, "https://registry-1.docker.io")
+    ram_high     = optional(string, "128")
+    tmpdir       = optional(string, "usb1/tmp")
+    layer_dir    = optional(string)
+  })
+}
+
+variable "containers" {
+  description = "List of containers"
+  type = list(object({
+    remote_image  = string
+    interface     = string
+    start_on_boot = optional(bool, true)
+    root_dir      = optional(string)
+    mounts        = optional(list(string), [])
+    logging       = optional(bool, true)
+    hostname      = string
+    running       = optional(bool, true)
+    user          = optional(string)
+    cmd           = optional(string)
+    comment       = optional(string, "tofu;;;")
+  }))
+  default = []
+  
+}

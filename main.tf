@@ -296,4 +296,41 @@ resource "routeros_file" "files" {
 
   name        = each.value.name
   contents    = file(each.value.contents)
+  depends_on = [ routeros_container_mounts.container_mounts ]
+}
+
+resource "routeros_container_mounts" "container_mounts" {
+  for_each = { for f in var.container_mounts : f.name => f }
+
+  name           = each.value.name
+  src            = each.value.src
+  dst            = each.value.dst
+}
+
+resource "routeros_container_config" "container_config" {
+  registry_url = var.container_config.registry_url
+  ram_high     = var.container_config.ram_high
+  tmpdir       = var.container_config.tmpdir
+  layer_dir    = var.container_config.layer_dir
+}
+
+resource "routeros_container" "containers" {
+  for_each = { for c in var.containers : c.hostname => c }
+
+    remote_image  = each.value.remote_image
+    interface     = each.value.interface
+    hostname      = each.value.hostname
+    start_on_boot = lookup(each.value, "start_on_boot", null)
+    root_dir      = lookup(each.value, "root_dir", null)
+    mounts        = lookup(each.value, "mounts", null)
+    logging       = lookup(each.value, "logging", null)
+    running       = lookup(each.value, "running", null)
+    user          = lookup(each.value, "user", null)
+    cmd           = lookup(each.value, "cmd", null)
+    comment       = lookup(each.value, "comment", null)
+
+    depends_on = [ 
+      routeros_container_config.container_config, 
+      routeros_container_mounts.container_mounts 
+    ]
 }

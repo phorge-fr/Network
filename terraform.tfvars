@@ -1,3 +1,10 @@
+container_config = {
+  registry_url = "https://registry-1.docker.io"
+  ram_high     = "128"
+  tmpdir       = "/usb1-part1/containers/tmp"
+  layer_dir    = "/usb1-part1/containers/layers"
+}
+
 vlans = [
   { interface = "bridge", name = "FrontPlane", vlan_id = 20, mtu = 8152 },
   { interface = "bridge", name = "IaaS-EW", vlan_id = 30, mtu = 8152 },
@@ -76,8 +83,8 @@ firewall_address_lists = [
 ]
 
 firewall_nat_rules = [
-  { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "80", to_addresses = "10.0.0.10", to_ports = "8080", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTP to FrontPlane LB Nginx" },
-  { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "443", to_addresses = "10.0.0.10", to_ports = "8443", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTPS to FrontPlane LB Nginx" },
+  { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "80", to_addresses = "172.17.0.2", to_ports = "8080", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTP to FrontPlane LB Nginx" },
+  { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "443", to_addresses = "172.17.0.2", to_ports = "8443", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTPS to FrontPlane LB Nginx" },
   { chain = "dstnat", action = "dst-nat", protocol = "udp", dst_port = "9", to_addresses = "10.5.0.253", dst_address="10.5.0.0/24", comment = "tofu;;; Allow WoL from other networks to HPC" }, # Requires to manually create a static ARP entry such as: 10.5.0.253 -> ff:ff:ff:ff:ff:ff
   { chain = "srcnat", action = "masquerade", src_address = "172.17.0.0/24", comment = "tofu;;; Masquerade outbound traffic for docker" },
 ]
@@ -123,5 +130,13 @@ bridges = [ {
 } ]
 
 files = [ {
-  name = "usb1/haproxy-etc/test.cfg", contents = "templates/haproxy.cfg"
+  name = "usb1/haproxy-etc/haproxy.cfg", contents = "templates/haproxy.cfg"
+} ]
+
+container_mounts = [ {
+  name = "haproxy_etc", src = "/usb1/haproxy-etc", dst = "/usr/local/etc/haproxy"
+} ]
+
+containers = [ {
+  hostname = "haproxy", remote_image = "arm32v7/haproxy:latest", mounts = [ "haproxy_etc" ], logging = true, root_dir = "usb1/images/haproxy", interface = "veth1", start_on_boot = true, user = "0:0"
 } ]
