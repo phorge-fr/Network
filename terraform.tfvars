@@ -1,8 +1,8 @@
 container_config = {
   registry_url = "https://registry-1.docker.io"
   ram_high     = "128"
-  tmpdir       = "/usb1-part1/containers/tmp"
-  layer_dir    = "/usb1-part1/containers/layers"
+  tmpdir       = "/usb1/containers/tmp"
+  layer_dir    = "/usb1/containers/layers"
 }
 
 vlans = [
