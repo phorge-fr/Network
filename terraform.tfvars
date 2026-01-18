@@ -88,6 +88,7 @@ firewall_address_lists = [
 firewall_nat_rules = [
   { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "80", to_addresses = "172.17.0.2", to_ports = "8080", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTP to FrontPlane LB Nginx" },
   { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "443", to_addresses = "172.17.0.2", to_ports = "8443", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTPS to FrontPlane LB Nginx" },
+  { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "22", to_addresses = "10.0.0.13", to_ports = "22", in_interface_list = "WAN", comment = "tofu;;; Redirect SSH to FrontPlane Gitea" },
   { chain = "dstnat", action = "dst-nat", protocol = "udp", dst_port = "9", to_addresses = "10.5.0.253", dst_address="10.5.0.0/24", comment = "tofu;;; Allow WoL from other networks to HPC" }, # Requires to manually create a static ARP entry such as: 10.5.0.253 -> ff:ff:ff:ff:ff:ff
   { chain = "srcnat", action = "masquerade", src_address = "172.17.0.0/24", comment = "tofu;;; Masquerade outbound traffic for docker" },
 ]
