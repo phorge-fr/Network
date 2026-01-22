@@ -64,7 +64,7 @@ firewall_rules = [
   { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", place_before="11", comment = "tofu;;; Drop overlay network"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="8444", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Prometheus Incus"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="9100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Prometheus Node Exporter"},
-  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="9100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for Prometheus"},
+  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="9090", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for Prometheus"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="4000", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for LiteLLM"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-NS", dst_address = "10.3.0.1", dst_port="8100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-NS for Bluemap"},
   { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.11", dst_port="3100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service Loki"},
