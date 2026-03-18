@@ -10,6 +10,7 @@ vlans = [
   { interface = "bridge", name = "IaaS-EW", vlan_id = 30, mtu = 8152 },
   { interface = "bridge", name = "IaaS-NS", vlan_id = 40, mtu = 8152 },
   { interface = "bridge", name = "HPC", vlan_id = 50, mtu = 8152 },
+  { interface = "bridge", name = "Storage", vlan_id = 60, mtu = 8152}
 ]
 
 ip_addresses = [
@@ -17,6 +18,7 @@ ip_addresses = [
   { interface = "IaaS-EW", address = "10.1.0.254/24" },
   { interface = "IaaS-NS", address = "10.2.0.254/24" },
   { interface = "HPC", address = "10.5.0.254/24" },
+  { interface = "Storage", address = "10.6.0.254/24"},
   { interface = "containers", address = "172.17.0.1/24"}
 ]
 
@@ -24,18 +26,21 @@ ip_pools = [
   # { name = "FrontPlane", ranges = ["10.0.0.1-10.0.0.253"]},
   # { name = "IaaS-EW", ranges = ["10.1.0.1-10.1.0.253"]},
   # { name = "HPC", ranges = ["10.5.0.1-10.5.0.253"] },
+  # { name = "Storage", ranges = ["10.6.0.1-10.6.0.253"] },
 ]
 
 dhcp_server_networks = [
   # { address = "10.0.0.0/24", gateway = "10.0.0.254", dns_server = ["10.0.0.254"] },
   # { address = "10.1.0.0/24", gateway = "10.1.0.254", dns_server = ["10.1.0.254"] },
   # { address = "10.5.0.0/24", gateway = "10.5.0.254", dns_server = ["10.5.0.254"] },
+  # { address = "10.6.0.0/24", gateway = "10.6.0.254", dns_server = ["10.6.0.254"] },
 ]
 
 dhcp_servers = [
   # { address_pool = "FrontPlane", interface = "FrontPlane", name = "FrontPlane" },
   # { address_pool = "IaaS-EW", interface = "IaaS-EW", name = "IaaS-EW" },
   # { address_pool = "HPC", interface = "HPC", name = "HPC" },
+  # { address_pool = "Storage", interface = "Storage", name = "Storage" },
 ]
 
 dns_records = [
@@ -54,7 +59,9 @@ dns_records = [
   { name = "brave-whale.phorge", address = "10.1.0.4", type = "A" },
   { name = "mighty-rabbit.phorge", address = "10.1.0.5", type = "A" },
   { name = "clever-panda.phorge", address = "10.1.0.6", type = "A" },
+  { name = "datastore-0.phorge", address = "10.6.0.1", type = "A"},
   { name = "hpc0.phorge", address = "10.5.0.1", type = "A" },
+  { name = "hpc-npu0.phorge", address = "10.5.0.2", type = "A" },
 ]
 
 
@@ -82,6 +89,8 @@ firewall_address_lists = [
   { list = "FrontPlane LoadBalancer IPs", address = "10.0.0.10-10.0.0.20"},
   { list = "FrontPlane API Server", address = "10.0.0.7"},
   { list = "IaaS Nodes", address = "10.1.0.1-10.1.0.6" },
+  { list = "HPC Nodes", address = "10.5.0.1-10.5.0.2" },
+  { list = "Storage Nodes", address = "10.6.0.1" }
 ]
 
 firewall_nat_rules = [
@@ -92,7 +101,7 @@ firewall_nat_rules = [
   { chain = "srcnat", action = "masquerade", src_address = "172.17.0.0/24", comment = "tofu;;; Masquerade outbound traffic for docker" },
 ]
 interface_lists = [ 
-  { name = "PCI", members = [ "FrontPlane", "IaaS-EW", "IaaS-NS", "HPC" ] },
+  { name = "PCI", members = [ "FrontPlane", "IaaS-EW", "IaaS-NS", "HPC", "Storage" ] },
   { name = "Containers", members = [ "containers", "veth1" ] },
 ]
 
