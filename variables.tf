@@ -291,6 +291,7 @@ variable "containers" {
     remote_image  = string
     interface     = string
     start_on_boot = optional(bool, true)
+    stop_signal   = optional(string, "15-SIGTERM")
     root_dir      = optional(string)
     mounts        = optional(list(string), [])
     logging       = optional(bool, true)

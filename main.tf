@@ -325,6 +325,7 @@ resource "routeros_container" "containers" {
     interface     = each.value.interface
     hostname      = each.value.hostname
     start_on_boot = lookup(each.value, "start_on_boot", null)
+    stop_signal   = lookup(each.value, "stop_signal", null)
     root_dir      = lookup(each.value, "root_dir", null)
     mounts        = lookup(each.value, "mounts", null)
     logging       = lookup(each.value, "logging", null)
