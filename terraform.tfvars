@@ -74,6 +74,7 @@ firewall_rules = [
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="9090", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for Prometheus"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="4000", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for LiteLLM"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-NS", dst_address = "10.3.0.1", dst_port="9000", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-NS for RustFS S3"},
+  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "Storage", dst_address = "10.6.0.1", dst_port="2049", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to Storage for NFS"},
   { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.11", dst_port="3100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service Loki"},
   { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.12", dst_port="8080", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service OpenFGA"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", dst_address = "10.5.0.253", dst_port="9", protocol = "udp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC WoL"},
