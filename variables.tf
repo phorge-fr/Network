@@ -73,8 +73,9 @@ variable "dns_records" {
   description = "List of DNS records"
   type = list(object({
     name    = string
-    address = string
-    type    = optional(string, "A")
+    address = optional(string)
+    cname   = optional(string)
+    type    = string
     comment = optional(string, "tofu;;;")
   }))
   default = []

@@ -58,10 +58,11 @@ resource "routeros_ip_dhcp_server" "dhcp_servers" {
 }
 
 resource "routeros_ip_dns_record" "name_records" {
-  for_each = { for record in var.dns_records : "${record.name}-${record.address}" => record }
+  for_each = { for record in var.dns_records : "${record.type}-${record.name}" => record }
 
-  name    = each.value.name
-  address = each.value.address
+  name    = lookup(each.value, "name", null)
+  address = lookup(each.value, "address", null)
+  cname   = lookup(each.value, "cname", null)
   type    = lookup(each.value, "type", "A")
   comment = lookup(each.value, "comment", null)
   
