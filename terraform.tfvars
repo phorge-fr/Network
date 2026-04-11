@@ -62,6 +62,10 @@ dns_records = [
   { name = "datastore-0.phorge", address = "10.6.0.1", type = "A"},
   { name = "hpc0.phorge", address = "10.5.0.1", type = "A" },
   { name = "hpc-npu0.phorge", address = "10.5.0.2", type = "A" },
+  { name = "frontplane.phorge", address = "10.0.0.11", type = "A" },
+  { name = "openfga.frontplane.phorge", cname = "frontplane.phorge", type = "CNAME" },
+  { name = "loki.frontplane.phorge", cname = "frontplane.phorge", type = "CNAME" },
+  { name = "prometheus.frontplane.phorge", cname = "frontplane.phorge", type = "CNAME" },
 ]
 
 
@@ -69,18 +73,13 @@ firewall_rules = [
   { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", place_before="5" , comment = "tofu;;; Allow TCP DNS from !LAN" },
   { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", place_before="5" , comment = "tofu;;; Allow UDP DNS from !LAN" },
   { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", place_before="11", comment = "tofu;;; Drop overlay network"},
-  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="8444", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Prometheus Incus"},
-  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-EW", dst_port="9100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-EW for Prometheus Node Exporter"},
-  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="9090", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for Prometheus"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="4000", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for LiteLLM"},
-  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "IaaS-NS", dst_address = "10.3.0.1", dst_port="9000", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to IaaS-NS for RustFS S3"},
   { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "Storage", dst_address = "10.6.0.1", dst_port="2049", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to Storage for NFS"},
-  { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.11", dst_port="3100", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service Loki"},
-  { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.12", dst_port="8080", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Service OpenFGA"},
-  { chain = "forward", action = "accept", in_interface = "FrontPlane", dst_address = "10.5.0.253", dst_port="9", protocol = "udp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC WoL"},
+  { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.11", dst_port="80,443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Internal Ingress"},
+  { chain = "forward", action = "accept", in_interface = "Storage", dst_address = "10.0.0.11", dst_port="80,443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow Storage to Frontplane Internal Ingress"},
   { chain = "forward", action = "accept", in_interface = "containers", out_interface = "IaaS-EW", dst_port="8443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow HAproxy container to IaaS Nodes"},
-  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "FrontPlane", dst_address = "10.0.0.10", dst_port="80", protocol = "tcp", place_before="11", comment = "tofu;;; Allow HAproxy container to FrontPlane Ingress HTTP"},
-  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "FrontPlane", dst_address = "10.0.0.10", dst_port="443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow HAproxy container to FrontPlane Ingress HTTPS"},
+  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "FrontPlane", dst_address = "10.0.0.10", dst_port="80,443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow HAproxy container to FrontPlane Ingress"},
+  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "IaaS-NS", dst_address = "10.3.0.10", dst_port="80,443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow HAproxy container to Koaloo"},
   { chain = "forward", action = "drop", in_interface_list = "Containers", out_interface_list = "PCI", comment = "tofu;;; Drop Containers to PCI" },
   { chain = "forward", action = "drop", in_interface_list = "PCI", out_interface_list = "PCI", comment = "tofu;;; Drop PCI to PCI" },
 ]
