@@ -72,6 +72,8 @@ dns_records = [
 
   { name = "stor-rpi5-01.phorge", address = "10.4.0.1", type = "A" },
 
+  { name = "ai-rpi5-01.phorge", address = "10.5.0.1", type = "A" },
+
   { name = "comp-opti-01.phorge", address = "10.10.0.1", type = "A" },
   { name = "comp-opti-02.phorge", address = "10.10.0.2", type = "A" },
   { name = "comp-opti-03.phorge", address = "10.10.0.3", type = "A" },
