@@ -6,138 +6,137 @@ container_config = {
 }
 
 vlans = [
-  { interface = "bridge", name = "FrontPlane", vlan_id = 20, mtu = 8152 },
-  { interface = "bridge", name = "IaaS-EW", vlan_id = 30, mtu = 8152 },
-  { interface = "bridge", name = "IaaS-NS", vlan_id = 40, mtu = 8152 },
-  { interface = "bridge", name = "HPC", vlan_id = 50, mtu = 8152 },
-  { interface = "bridge", name = "Storage", vlan_id = 60, mtu = 8152}
+  { interface = "bridge", name = "ctrl", vlan_id = 20, mtu = 8152 },
+  { interface = "bridge", name = "core", vlan_id = 30, mtu = 8152 },
+  { interface = "bridge", name = "svc", vlan_id = 40, mtu = 8152 },
+  { interface = "bridge", name = "stor", vlan_id = 50, mtu = 8152 },
+  { interface = "bridge", name = "ai", vlan_id = 60, mtu = 8152},
+  { interface = "bridge", name = "comp-ew", vlan_id = 70, mtu = 8152 },
+  { interface = "bridge", name = "comp-ns", vlan_id = 80, mtu = 8152 },
 ]
 
 ip_addresses = [
-  { interface = "FrontPlane", address = "10.0.0.254/24" },
-  { interface = "IaaS-EW", address = "10.1.0.254/24" },
-  { interface = "IaaS-NS", address = "10.2.0.254/24" },
-  { interface = "HPC", address = "10.5.0.254/24" },
-  { interface = "Storage", address = "10.6.0.254/24"},
-  { interface = "containers", address = "172.17.0.1/24"}
+  { interface = "ctrl", address = "10.1.0.254/24" },
+  { interface = "core", address = "10.2.0.254/24" },
+  { interface = "svc", address = "10.3.0.254/24" },
+  { interface = "stor", address = "10.4.0.254/24" },
+  { interface = "ai", address = "10.5.0.254/24" },
+  { interface = "comp-ew", address = "10.10.0.254/24" },
+  { interface = "comp-ns", address = "10.10.1.254/24" },
+  # { interface = "containers", address = "172.17.0.1/24"}
 ]
 
 ip_pools = [
-  # { name = "FrontPlane", ranges = ["10.0.0.1-10.0.0.253"]},
-  # { name = "IaaS-EW", ranges = ["10.1.0.1-10.1.0.253"]},
-  # { name = "HPC", ranges = ["10.5.0.1-10.5.0.253"] },
-  # { name = "Storage", ranges = ["10.6.0.1-10.6.0.253"] },
+  { name = "ctrl", ranges = ["10.1.0.1-10.1.0.253"]},
+  { name = "core", ranges = ["10.2.0.1-10.2.0.253"]},
+  { name = "svc", ranges = ["10.3.0.1-10.3.0.253"]},
+  { name = "stor", ranges = ["10.4.0.1-10.4.0.253"]},
+  { name = "ai", ranges = ["10.5.0.1-10.5.0.253"]},
+  { name = "comp-ew", ranges = ["10.10.0.1-10.10.0.253"]},
 ]
 
 dhcp_server_networks = [
-  # { address = "10.0.0.0/24", gateway = "10.0.0.254", dns_server = ["10.0.0.254"] },
-  # { address = "10.1.0.0/24", gateway = "10.1.0.254", dns_server = ["10.1.0.254"] },
-  # { address = "10.5.0.0/24", gateway = "10.5.0.254", dns_server = ["10.5.0.254"] },
-  # { address = "10.6.0.0/24", gateway = "10.6.0.254", dns_server = ["10.6.0.254"] },
+  { address = "10.1.0.0/24", gateway = "10.1.0.254", dns_server = ["10.1.0.254"] },
+  { address = "10.2.0.0/24", gateway = "10.2.0.254", dns_server = ["10.2.0.254"] },
+  { address = "10.3.0.0/24", gateway = "10.3.0.254", dns_server = ["10.3.0.254"] },
+  { address = "10.4.0.0/24", gateway = "10.4.0.254", dns_server = ["10.4.0.254"] },
+  { address = "10.5.0.0/24", gateway = "10.5.0.254", dns_server = ["10.5.0.254"] },
+  { address = "10.10.0.0/24", gateway = "10.10.0.254", dns_server = ["10.10.0.254"] },
 ]
 
 dhcp_servers = [
-  # { address_pool = "FrontPlane", interface = "FrontPlane", name = "FrontPlane" },
-  # { address_pool = "IaaS-EW", interface = "IaaS-EW", name = "IaaS-EW" },
-  # { address_pool = "HPC", interface = "HPC", name = "HPC" },
-  # { address_pool = "Storage", interface = "Storage", name = "Storage" },
+  { address_pool = "ctrl", interface = "ctrl", name = "ctrl" },
+  { address_pool = "core", interface = "core", name = "core" },
+  { address_pool = "svc", interface = "svc", name = "svc" },
+  { address_pool = "stor", interface = "stor", name = "stor" },
+  { address_pool = "ai", interface = "ai", name = "ai" },
+  { address_pool = "comp-ew", interface = "comp-ew", name = "comp-ew" },
 ]
 
 dns_records = [
-  { name = "core-gw0.phorge", address = "192.168.2.254", type = "A" },
-  { name = "fp-sw0.phorge", address = "192.168.2.253", type = "A" },
-  { name = "iaas-sw0.phorge", address = "192.168.2.252", type = "A" },
-  { name = "quiet-lion.phorge", address = "10.0.0.1", type = "A" },
-  { name = "happy-whale.phorge", address = "10.0.0.2", type = "A" },
-  { name = "sly-deer.phorge", address = "10.0.0.3", type = "A" },
-  { name = "strong-owl.phorge", address = "10.0.0.4", type = "A" },
-  { name = "silent-lion.phorge", address = "10.0.0.5", type = "A" },
-  { name = "calm-rabbit.phorge", address = "10.0.0.6", type = "A" },
-  { name = "clever-lynx.phorge", address = "10.1.0.1", type = "A" },
-  { name = "gentle-fox.phorge", address = "10.1.0.2", type = "A" },
-  { name = "mighty-deer.phorge", address = "10.1.0.3", type = "A" },
-  { name = "brave-whale.phorge", address = "10.1.0.4", type = "A" },
-  { name = "mighty-rabbit.phorge", address = "10.1.0.5", type = "A" },
-  { name = "clever-panda.phorge", address = "10.1.0.6", type = "A" },
-  { name = "datastore-0.phorge", address = "10.6.0.1", type = "A"},
-  { name = "hpc0.phorge", address = "10.5.0.1", type = "A" },
-  { name = "hpc-npu0.phorge", address = "10.5.0.2", type = "A" },
-  { name = "frontplane.phorge", address = "10.0.0.11", type = "A" },
-  { name = "openfga.frontplane.phorge", cname = "frontplane.phorge", type = "CNAME" },
-  { name = "loki.frontplane.phorge", cname = "frontplane.phorge", type = "CNAME" },
-  { name = "prometheus.frontplane.phorge", cname = "frontplane.phorge", type = "CNAME" },
+  { name = "main-gw-0.phorge", address = "192.168.2.254", type = "A" },
+  { name = "main-sw-0.phorge", address = "192.168.2.253", type = "A" },
+  { name = "main-sw-1.phorge", address = "192.168.2.252", type = "A" },
+
+  { name = "ctrl-rpi4-01.phorge", address = "10.1.0.1", type = "A" },
+  { name = "ctrl-rpi4-02.phorge", address = "10.1.0.2", type = "A" },
+  { name = "ctrl-rpi4-03.phorge", address = "10.1.0.3", type = "A" },
+
+  { name = "core-wyse-01.phorge", address = "10.2.0.1", type = "A" },
+  { name = "core-wyse-02.phorge", address = "10.2.0.2", type = "A" },
+  { name = "core-wyse-03.phorge", address = "10.2.0.3", type = "A" },
+
+  { name = "svc-rock64-01.phorge", address = "10.3.0.1", type = "A" },
+  { name = "svc-rock64-02.phorge", address = "10.3.0.2", type = "A" },
+  { name = "svc-rock64-03.phorge", address = "10.3.0.3", type = "A" },
+
+  { name = "stor-rpi5-01.phorge", address = "10.4.0.1", type = "A" },
+
+  { name = "comp-opti-01.phorge", address = "10.10.0.1", type = "A" },
+  { name = "comp-opti-02.phorge", address = "10.10.0.2", type = "A" },
+  { name = "comp-opti-03.phorge", address = "10.10.0.3", type = "A" },
 ]
 
 
 firewall_rules = [
-  { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", place_before="5" , comment = "tofu;;; Allow TCP DNS from !LAN" },
-  { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", place_before="5" , comment = "tofu;;; Allow UDP DNS from !LAN" },
-  { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", place_before="11", comment = "tofu;;; Drop overlay network"},
-  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "HPC", dst_port="4000", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to HPC for LiteLLM"},
-  { chain = "forward", action = "accept", in_interface = "FrontPlane", out_interface = "Storage", dst_address = "10.6.0.1", dst_port="2049", protocol = "tcp", place_before="11", comment = "tofu;;; Allow FrontPlane to Storage for NFS"},
-  { chain = "forward", action = "accept", in_interface = "IaaS-EW", dst_address = "10.0.0.11", dst_port="80,443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow IaaS-EW to Frontplane Internal Ingress"},
-  { chain = "forward", action = "accept", in_interface = "Storage", dst_address = "10.0.0.11", dst_port="80,443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow Storage to Frontplane Internal Ingress"},
-  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "IaaS-EW", dst_port="8443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow HAproxy container to IaaS Nodes"},
-  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "FrontPlane", dst_address = "10.0.0.10", dst_port="80,443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow HAproxy container to FrontPlane Ingress"},
-  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "IaaS-NS", dst_address = "10.3.0.10", dst_port="80,443", protocol = "tcp", place_before="11", comment = "tofu;;; Allow HAproxy container to Koaloo"},
-  { chain = "forward", action = "drop", in_interface_list = "Containers", out_interface_list = "PCI", comment = "tofu;;; Drop Containers to PCI" },
-  { chain = "forward", action = "drop", in_interface_list = "PCI", out_interface_list = "PCI", comment = "tofu;;; Drop PCI to PCI" },
+  { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", place_before="5", comment = "tofu;;; Allow TCP DNS from !LAN" },
+  { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", place_before="5", comment = "tofu;;; Allow UDP DNS from !LAN" },
+  { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", comment = "tofu;;; Drop overlay network"},
+  { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.2.0/24", comment = "tofu;;; Drop 'this' network"},
+  { chain = "forward", action = "drop", in_interface_list = "phorge", out_interface_list = "phorge", comment = "tofu;;; Drop phorge to phorge" },
+  # { chain = "forward", action = "drop", in_interface_list = "Containers", out_interface_list = "PCI", comment = "tofu;;; Drop Containers to PCI" },
 ]
 
 firewall_address_lists = [
-  { list = "FrontPlane Nodes", address = "10.0.0.1-10.0.0.6" },
-  { list = "FrontPlane LoadBalancer IPs", address = "10.0.0.10-10.0.0.20"},
-  { list = "FrontPlane API Server", address = "10.0.0.7"},
-  { list = "IaaS Nodes", address = "10.1.0.1-10.1.0.6" },
-  { list = "HPC Nodes", address = "10.5.0.1-10.5.0.2" },
-  { list = "Storage Nodes", address = "10.6.0.1" }
+  { list = "ctrl-nodes", address = "10.1.0.1-10.1.0.3" },
+  { list = "core-nodes", address = "10.2.0.1-10.2.0.3" },
+  { list = "svc-nodes", address = "10.3.0.1-10.3.0.3" },
+  { list = "stor-nodes", address = "10.4.0.1" },
+  { list = "ai-nodes", address = "10.5.0.1-10.5.0.2" },
+  { list = "comp-nodes", address = "10.10.0.1-10.10.0.3" },
 ]
 
 firewall_nat_rules = [
-  { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "80", to_addresses = "172.17.0.2", to_ports = "8080", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTP to FrontPlane LB Nginx" },
-  { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "443", to_addresses = "172.17.0.2", to_ports = "8443", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTPS to FrontPlane LB Nginx" },
-  { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "22", to_addresses = "10.0.0.13", to_ports = "22", in_interface_list = "WAN", comment = "tofu;;; Redirect SSH to FrontPlane Gitea" },
-  { chain = "dstnat", action = "dst-nat", protocol = "udp", dst_port = "9", to_addresses = "10.5.0.253", dst_address="10.5.0.0/24", comment = "tofu;;; Allow WoL from other networks to HPC" }, # Requires to manually create a static ARP entry such as: 10.5.0.253 -> ff:ff:ff:ff:ff:ff
+  # { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "80", to_addresses = "172.17.0.2", to_ports = "8080", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTP to FrontPlane LB Nginx" },
+  # { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "443", to_addresses = "172.17.0.2", to_ports = "8443", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTPS to FrontPlane LB Nginx" },
   { chain = "srcnat", action = "masquerade", src_address = "172.17.0.0/24", comment = "tofu;;; Masquerade outbound traffic for docker" },
 ]
 interface_lists = [ 
-  { name = "PCI", members = [ "FrontPlane", "IaaS-EW", "IaaS-NS", "HPC", "Storage" ] },
-  { name = "Containers", members = [ "containers", "veth1" ] },
+  { name = "phorge", members = [ "ctrl", "core", "svc", "stor", "ai", "comp-ew", "comp-ns" ] },
+  # { name = "Containers", members = [ "containers", "veth1" ] },
 ]
 
 vxlan_interfaces = [ 
-  { name = "white2net", mtu = 1500, vni = 171, comment = "tofu;;; VXLAN to White2Net"}
 ]
 
 vxlan_vteps = [
-  { interface = "white2net", remote_ip = "194.50.19.45" }
 ]
 
-bgp_connections = [
-  { as = 65535, comment = "tofu;;; IaaS clever-lynx", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "clever-lynx", remote = { address = "10.1.0.1" , as = 65535 } },
-  { as = 65535, comment = "tofu;;; IaaS gentle-fox", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "gentle-fox", remote = { address = "10.1.0.2" , as = 65535 } },
-  { as = 65535, comment = "tofu;;; IaaS mighty-deer", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "mighty-deer", remote = { address = "10.1.0.3" , as = 65535 } },
-  { as = 65535, comment = "tofu;;; IaaS brave-whale", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "brave-whale", remote = { address = "10.1.0.4" , as = 65535 } },
-  { as = 65535, comment = "tofu;;; IaaS mighty-rabbit", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "mighty-rabbit", remote = { address = "10.1.0.5" , as = 65535 } },
-  { as = 65535, comment = "tofu;;; IaaS clever-panda", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "clever-panda", remote = { address = "10.1.0.6" , as = 65535 } }
-]
+# bgp_connections = [
+#   { as = 65535, comment = "tofu;;; IaaS clever-lynx", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "clever-lynx", remote = { address = "10.1.0.1" , as = 65535 } },
+#   { as = 65535, comment = "tofu;;; IaaS gentle-fox", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "gentle-fox", remote = { address = "10.1.0.2" , as = 65535 } },
+#   { as = 65535, comment = "tofu;;; IaaS mighty-deer", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "mighty-deer", remote = { address = "10.1.0.3" , as = 65535 } },
+#   { as = 65535, comment = "tofu;;; IaaS brave-whale", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "brave-whale", remote = { address = "10.1.0.4" , as = 65535 } },
+#   { as = 65535, comment = "tofu;;; IaaS mighty-rabbit", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "mighty-rabbit", remote = { address = "10.1.0.5" , as = 65535 } },
+#   { as = 65535, comment = "tofu;;; IaaS clever-panda", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "clever-panda", remote = { address = "10.1.0.6" , as = 65535 } }
+# ]
 
-veths = [ {
-  name = "veth1", address = ["172.17.0.2/24"], gateway = "172.17.0.1", comment = "tofu;;; Containers Veth"
-} ]
+# veths = [ {
+#   name = "veth1", address = ["172.17.0.2/24"], gateway = "172.17.0.1", comment = "tofu;;; Containers Veth"
+# } ]
 
-bridges = [ {
-  name = "containers", ports = ["veth1"], comment = "tofu;;;  Containers Bridge"
-} ]
+# bridges = [ {
+#   name = "containers", ports = ["veth1"], comment = "tofu;;;  Containers Bridge"
+# } ]
 
-files = [ {
-  name = "usb1/haproxy-etc/haproxy.cfg", contents = "templates/haproxy.cfg"
-} ]
+# files = [ {
+#   name = "usb1/haproxy-etc/haproxy.cfg", contents = "templates/haproxy.cfg"
+# } ]
 
-container_mounts = [ {
-  name = "haproxy_etc", src = "/usb1/haproxy-etc", dst = "/usr/local/etc/haproxy"
-} ]
+# container_mounts = [ {
+#   name = "haproxy_etc", src = "/usb1/haproxy-etc", dst = "/usr/local/etc/haproxy"
+# } ]
 
-containers = [ {
-  hostname = "haproxy", remote_image = "arm32v7/haproxy:latest", mounts = [ "haproxy_etc" ], logging = true, root_dir = "usb1/images/haproxy", interface = "veth1", start_on_boot = true, user = "0:0"
-} ]
+# containers = [ {
+#   hostname = "haproxy", remote_image = "arm32v7/haproxy:latest", mounts = [ "haproxy_etc" ], logging = true, root_dir = "usb1/images/haproxy", interface = "veth1", start_on_boot = true, user = "0:0"
+# } ]

@@ -2,6 +2,28 @@ locals {
   interface_lists_map = { for list in var.interface_lists : list.name => list }
 }
 
+data "routeros_ip_firewall" "fw" {
+  rules {
+    filter = {
+      chain = "forward"
+    }
+  }
+  rules {
+    filter = {
+      chain = "input"
+    }
+  }
+  rules {
+    filter = {
+      chain = "output"
+    }
+  }
+}
+
+# output "rules" {
+#   value = [for value in data.routeros_ip_firewall.fw.rules : [value.id, value.comment]]
+# }
+
 resource "routeros_interface_vlan" "vlans" {
   for_each = { for v in var.vlans : "${v.interface}-${v.vlan_id}" => v }
 
