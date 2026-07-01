@@ -23,7 +23,7 @@ ip_addresses = [
   { interface = "ai", address = "10.5.0.254/24" },
   { interface = "comp-ew", address = "10.10.0.254/24" },
   { interface = "comp-ns", address = "10.10.1.254/24" },
-  # { interface = "containers", address = "172.17.0.1/24"}
+  { interface = "containers", address = "172.17.0.1/24"}
 ]
 
 ip_pools = [
@@ -86,7 +86,7 @@ firewall_rules = [
   { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", comment = "tofu;;; Drop overlay network"},
   { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.2.0/24", comment = "tofu;;; Drop 'this' network"},
   { chain = "forward", action = "drop", in_interface_list = "phorge", out_interface_list = "phorge", comment = "tofu;;; Drop phorge to phorge" },
-  # { chain = "forward", action = "drop", in_interface_list = "Containers", out_interface_list = "PCI", comment = "tofu;;; Drop Containers to PCI" },
+  { chain = "forward", action = "drop", in_interface_list = "Containers", out_interface_list = "phorge", comment = "tofu;;; Drop Containers to phorge" },
 ]
 
 firewall_address_lists = [
@@ -99,13 +99,13 @@ firewall_address_lists = [
 ]
 
 firewall_nat_rules = [
-  # { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "80", to_addresses = "172.17.0.2", to_ports = "8080", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTP to FrontPlane LB Nginx" },
-  # { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "443", to_addresses = "172.17.0.2", to_ports = "8443", in_interface_list = "WAN", comment = "tofu;;; Redirect HTTPS to FrontPlane LB Nginx" },
+  { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "80", to_addresses = "172.17.0.2", to_ports = "8080", in_interface_list = "WAN", comment = "tofu;;; Allow 80/TCP to Haproxy" },
+  { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "443", to_addresses = "172.17.0.2", to_ports = "8443", in_interface_list = "WAN", comment = "tofu;;; Allow 443/TCP to Haproxy" },
   { chain = "srcnat", action = "masquerade", src_address = "172.17.0.0/24", comment = "tofu;;; Masquerade outbound traffic for docker" },
 ]
 interface_lists = [ 
   { name = "phorge", members = [ "ctrl", "core", "svc", "stor", "ai", "comp-ew", "comp-ns" ] },
-  # { name = "Containers", members = [ "containers", "veth1" ] },
+  { name = "Containers", members = [ "containers", "veth1" ] },
 ]
 
 vxlan_interfaces = [ 
@@ -123,22 +123,22 @@ vxlan_vteps = [
 #   { as = 65535, comment = "tofu;;; IaaS clever-panda", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "clever-panda", remote = { address = "10.1.0.6" , as = 65535 } }
 # ]
 
-# veths = [ {
-#   name = "veth1", address = ["172.17.0.2/24"], gateway = "172.17.0.1", comment = "tofu;;; Containers Veth"
-# } ]
+veths = [ {
+  name = "veth1", address = ["172.17.0.2/24"], gateway = "172.17.0.1", comment = "tofu;;; Containers Veth"
+} ]
 
-# bridges = [ {
-#   name = "containers", ports = ["veth1"], comment = "tofu;;;  Containers Bridge"
-# } ]
+bridges = [ {
+  name = "containers", ports = ["veth1"], comment = "tofu;;;  Containers Bridge"
+} ]
 
-# files = [ {
-#   name = "usb1/haproxy-etc/haproxy.cfg", contents = "templates/haproxy.cfg"
-# } ]
+files = [ {
+  name = "usb1/haproxy-etc/haproxy.cfg", contents = "templates/haproxy.cfg"
+} ]
 
-# container_mounts = [ {
-#   name = "haproxy_etc", src = "/usb1/haproxy-etc", dst = "/usr/local/etc/haproxy"
-# } ]
+container_mounts = [ {
+  name = "haproxy_etc", src = "/usb1/haproxy-etc", dst = "/usr/local/etc/haproxy"
+} ]
 
-# containers = [ {
-#   hostname = "haproxy", remote_image = "arm32v7/haproxy:latest", mounts = [ "haproxy_etc" ], logging = true, root_dir = "usb1/images/haproxy", interface = "veth1", start_on_boot = true, user = "0:0"
-# } ]
+containers = [ {
+  hostname = "haproxy", remote_image = "arm32v7/haproxy:latest", mounts = [ "haproxy_etc" ], logging = true, root_dir = "usb1/images/haproxy", interface = "veth1", start_on_boot = true, user = "0:0"
+} ]
