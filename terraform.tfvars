@@ -83,6 +83,7 @@ dns_records = [
 firewall_rules = [
   { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", place_before="5", comment = "tofu;;; Allow TCP DNS from !LAN" },
   { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", place_before="5", comment = "tofu;;; Allow UDP DNS from !LAN" },
+  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "core", dst_address = "10.2.0.11", dst_port="80,443", protocol = "tcp", place_before="12", comment = "tofu;;; Allow Hproxy to core cluster Ingress"},
   { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", comment = "tofu;;; Drop overlay network"},
   { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.2.0/24", comment = "tofu;;; Drop 'this' network"},
   { chain = "forward", action = "drop", in_interface_list = "phorge", out_interface_list = "phorge", comment = "tofu;;; Drop phorge to phorge" },
