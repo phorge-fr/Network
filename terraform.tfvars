@@ -80,6 +80,7 @@ dns_records = [
 
   { name = "prometheus.core.phorge", address = "10.2.0.10", type = "A" },
   { name = "loki.core.phorge", address = "10.2.0.10", type = "A" },
+  { name = "openfga.core.phorge", address = "10.2.0.10", type = "A" },
 ]
 
 
@@ -92,6 +93,7 @@ firewall_rules = [
   { chain = "forward", action = "accept", src_address_list = "svc-nodes", dst_address_list = "stor-nodes", dst_port = "2049", protocol = "udp", place_before="12", comment = "tofu;;; Allow svc cluster nodes to stor nodes over NFS/UDP" },
   { chain = "forward", action = "accept", src_address_list = "ctrl-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", place_before="12", comment = "tofu;;; Allow ctrl cluster nodes to push metrics/logs to core (Alloy)" },
   { chain = "forward", action = "accept", src_address_list = "svc-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", place_before="12", comment = "tofu;;; Allow svc cluster nodes to push metrics/logs to core (Alloy)" },
+  { chain = "forward", action = "accept", src_address_list = "core-nodes", dst_address_list = "stor-nodes", dst_port = "9000", protocol = "tcp", place_before="12", comment = "tofu;;; Allow core cluster nodes to stor rustfs S3 (Longhorn backups)" },
   { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", comment = "tofu;;; Drop overlay network"},
   { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.2.0/24", comment = "tofu;;; Drop 'this' network"},
   { chain = "forward", action = "drop", in_interface_list = "phorge", out_interface_list = "phorge", comment = "tofu;;; Drop phorge to phorge" },
