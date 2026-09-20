@@ -37,11 +37,11 @@
 add name=root-cert common-name=Phorge-Core-0 days-valid=3650 key-usage=key-cert-sign,crl-sign
 sign root-cert
 /certificate
-add name=https-cert common-name=Phorge-Core-0_HTTPS days-valid=3650
-sign ca=root-cert https-cert
+add name=router-https common-name=Phorge-Core-0_HTTPS days-valid=3600 key-usage=digital-signature,key-encipherment,tls-server subject-alt-name=DNS:core0.phorge,DNS:main-gw-0.phorge,IP:192.168.2.254
+sign ca=root-cert router-https
 
 /ip service
-set www-ssl certificate=https-cert disabled=no
+set www-ssl certificate=router-https disabled=no
 set www disabled=yes
 
 # --- Interfaces ---
