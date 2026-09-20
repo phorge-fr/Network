@@ -50,21 +50,25 @@ dns_records = [
 ]
 
 
+# Rules are placed on the router in this order. `before` puts a rule right above the factory rule of
+# that name in the same chain; without it the rule goes to the end of the chain.
 firewall_rules = [
-  { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", place_before = "5", comment = "tofu;;; Allow TCP DNS from !LAN" },
-  { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", place_before = "5", comment = "tofu;;; Allow UDP DNS from !LAN" },
-  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "core", dst_address = "10.2.0.11", dst_port = "80,443", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow Hproxy to core cluster Ingress" },
-  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "svc", dst_address = "10.3.0.11", dst_port = "80,443", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow Hproxy to svc cluster Ingress" },
-  { chain = "forward", action = "accept", src_address_list = "svc-nodes", dst_address_list = "stor-nodes", dst_port = "2049", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow svc cluster nodes to stor nodes over NFS/TCP" },
-  { chain = "forward", action = "accept", src_address_list = "svc-nodes", dst_address_list = "stor-nodes", dst_port = "2049", protocol = "udp", place_before = "12", comment = "tofu;;; Allow svc cluster nodes to stor nodes over NFS/UDP" },
-  { chain = "forward", action = "accept", src_address_list = "ctrl-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow ctrl cluster nodes to push metrics/logs to core (Alloy)" },
-  { chain = "forward", action = "accept", src_address_list = "svc-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow svc cluster nodes to push metrics/logs to core (Alloy)" },
-  { chain = "forward", action = "accept", src_address_list = "stor-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow stor nodes to push metrics/logs to core (Alloy)" },
-  { chain = "forward", action = "accept", src_address_list = "core-nodes", dst_address_list = "stor-nodes", dst_port = "9000", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow core cluster nodes to stor rustfs S3 (Longhorn backups)" },
-  { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", comment = "tofu;;; Drop overlay network" },
-  { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.2.0/24", comment = "tofu;;; Drop 'this' network" },
-  { chain = "forward", action = "drop", in_interface_list = "phorge", out_interface_list = "phorge", comment = "tofu;;; Drop phorge to phorge" },
-  { chain = "forward", action = "drop", in_interface_list = "Containers", out_interface_list = "phorge", comment = "tofu;;; Drop Containers to phorge" },
+  { id = "dns-tcp-from-non-lan", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", comment = "tofu;;; Allow TCP DNS from !LAN" },
+  { id = "dns-udp-from-non-lan", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", comment = "tofu;;; Allow UDP DNS from !LAN" },
+
+  { id = "hproxy-to-core-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", out_interface = "core", dst_address = "10.2.0.11", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to core cluster Ingress" },
+  { id = "hproxy-to-svc-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", out_interface = "svc", dst_address = "10.3.0.11", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to svc cluster Ingress" },
+  { id = "alloy-ctrl-to-core", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "ctrl-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", comment = "tofu;;; Allow ctrl cluster nodes to push metrics/logs to core (Alloy)" },
+  { id = "alloy-svc-to-core", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "svc-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", comment = "tofu;;; Allow svc cluster nodes to push metrics/logs to core (Alloy)" },
+  { id = "alloy-stor-to-core", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "stor-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", comment = "tofu;;; Allow stor nodes to push metrics/logs to core (Alloy)" },
+  { id = "nfs-tcp-svc-to-stor", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "svc-nodes", dst_address_list = "stor-nodes", dst_port = "2049", protocol = "tcp", comment = "tofu;;; Allow svc cluster nodes to stor nodes over NFS/TCP" },
+  { id = "nfs-udp-svc-to-stor", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "svc-nodes", dst_address_list = "stor-nodes", dst_port = "2049", protocol = "udp", comment = "tofu;;; Allow svc cluster nodes to stor nodes over NFS/UDP" },
+  { id = "s3-core-to-stor", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "core-nodes", dst_address_list = "stor-nodes", dst_port = "9000", protocol = "tcp", comment = "tofu;;; Allow core cluster nodes to stor rustfs S3 (Longhorn backups)" },
+
+  { id = "drop-this-network", chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.2.0/24", comment = "tofu;;; Drop 'this' network" },
+  { id = "drop-overlay-network", chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", comment = "tofu;;; Drop overlay network" },
+  { id = "drop-containers-to-phorge", chain = "forward", action = "drop", in_interface_list = "Containers", out_interface_list = "phorge", comment = "tofu;;; Drop Containers to phorge" },
+  { id = "drop-phorge-to-phorge", chain = "forward", action = "drop", in_interface_list = "phorge", out_interface_list = "phorge", comment = "tofu;;; Drop phorge to phorge" },
 ]
 
 firewall_nat_rules = [

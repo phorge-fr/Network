@@ -96,10 +96,12 @@ variable "dns_records" {
 }
 
 variable "firewall_rules" {
-  description = "List of firewall rules"
+  description = "Firewall filter rules, placed on the router in list order. id is the stable key. before is the comment of the factory rule of the same chain that the rule must sit above; without it the rule goes to the end of the chain."
   type = list(object({
+    id     = string
     action = string
     chain  = string
+    before = optional(string)
 
     address_list              = optional(string)
     address_list_timeout      = optional(string)
@@ -143,7 +145,6 @@ variable "firewall_rules" {
     packet_mark               = optional(string)
     packet_size               = optional(string)
     per_connection_classifier = optional(string)
-    place_before              = optional(string)
     port                      = optional(string)
     priority                  = optional(number)
     protocol                  = optional(string)
@@ -177,6 +178,11 @@ variable "firewall_rules" {
       )
     ])
     error_message = "action is not a RouterOS firewall filter action."
+  }
+
+  validation {
+    condition     = length(distinct([for r in var.firewall_rules : r.id])) == length(var.firewall_rules)
+    error_message = "Every firewall rule needs its own id."
   }
 }
 

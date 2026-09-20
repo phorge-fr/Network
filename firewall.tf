@@ -20,8 +20,29 @@ data "routeros_ip_firewall" "fw" {
 #   value = [for value in data.routeros_ip_firewall.fw.rules : [value.id, value.comment]]
 # }
 
+locals {
+  firewall_rules = var.firewall_rules
+
+  # Rules of one chain that sit above the same factory rule are moved together
+  firewall_groups = {
+    for key, rules in {
+      for r in local.firewall_rules : "${r.chain}/${r.before != null ? r.before : "end of chain"}" => r...
+      } : key => {
+      chain  = rules[0].chain
+      before = rules[0].before
+      ids    = [for r in rules : r.id]
+    }
+  }
+
+  firewall_anchors = {
+    for key, g in local.firewall_groups : key => g.before == null ? [] : [
+      for r in data.routeros_ip_firewall.fw.rules : r.id if r.chain == g.chain && r.comment == g.before && !r.dynamic
+    ]
+  }
+}
+
 resource "routeros_ip_firewall_filter" "firewall_rules" {
-  for_each = { for rule in var.firewall_rules : "${rule.chain}-${rule.action}-${rule.priority != null ? rule.priority : ""}-${rule.comment != null ? rule.comment : ""}-${rule.dst_address != null ? rule.dst_address : ""}-${rule.src_address != null ? rule.src_address : ""}" => rule }
+  for_each = { for r in local.firewall_rules : r.id => r }
 
   action = each.value.action
   chain  = each.value.chain
@@ -68,7 +89,6 @@ resource "routeros_ip_firewall_filter" "firewall_rules" {
   packet_mark               = each.value.packet_mark
   packet_size               = each.value.packet_size
   per_connection_classifier = each.value.per_connection_classifier
-  place_before              = each.value.place_before
   port                      = each.value.port
   priority                  = each.value.priority
   protocol                  = each.value.protocol
@@ -87,6 +107,28 @@ resource "routeros_ip_firewall_filter" "firewall_rules" {
   time                      = each.value.time
   tls_host                  = each.value.tls_host
   ttl                       = each.value.ttl
+
+  # Rules created before ids and routeros_move_items carry a place_before, which forces a new rule
+  lifecycle {
+    ignore_changes = [place_before]
+  }
+}
+
+resource "routeros_move_items" "firewall_filter" {
+  for_each = { for key, g in local.firewall_groups : key => g if length(g.ids) + (g.before != null ? 1 : 0) >= 2 }
+
+  resource_path = "/ip/firewall/filter"
+  sequence = concat(
+    [for id in each.value.ids : routeros_ip_firewall_filter.firewall_rules[id].id],
+    each.value.before == null ? [] : [try(local.firewall_anchors[each.key][0], "")],
+  )
+
+  lifecycle {
+    precondition {
+      condition     = each.value.before == null ? true : length(local.firewall_anchors[each.key]) == 1
+      error_message = "The factory rule of \"${each.key}\" was not found exactly once on the router."
+    }
+  }
 }
 
 resource "routeros_ip_firewall_addr_list" "address_lists" {
