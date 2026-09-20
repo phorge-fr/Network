@@ -5,52 +5,18 @@ container_config = {
   layer_dir    = "/usb1/containers/layers"
 }
 
-vlans = [
-  { interface = "bridge", name = "ctrl", vlan_id = 20, mtu = 8152 },
-  { interface = "bridge", name = "core", vlan_id = 30, mtu = 8152 },
-  { interface = "bridge", name = "svc", vlan_id = 40, mtu = 8152 },
-  { interface = "bridge", name = "stor", vlan_id = 50, mtu = 8152 },
-  { interface = "bridge", name = "ai", vlan_id = 60, mtu = 8152 },
-  { interface = "bridge", name = "comp-ew", vlan_id = 70, mtu = 8152 },
-  { interface = "bridge", name = "comp-ns", vlan_id = 80, mtu = 8152 },
-]
+networks = {
+  ctrl    = { vlan_id = 20, cidr = "10.1.0.0/24", dhcp_pool = "10.1.0.1-10.1.0.253", nodes = ["10.1.0.1-10.1.0.3"] }
+  core    = { vlan_id = 30, cidr = "10.2.0.0/24", dhcp_pool = "10.2.0.1-10.2.0.253", nodes = ["10.2.0.1-10.2.0.3"] }
+  svc     = { vlan_id = 40, cidr = "10.3.0.0/24", dhcp_pool = "10.3.0.1-10.3.0.253", nodes = ["10.3.0.1-10.3.0.3"] }
+  stor    = { vlan_id = 50, cidr = "10.4.0.0/24", dhcp_pool = "10.4.0.1-10.4.0.253", nodes = ["10.4.0.1"] }
+  ai      = { vlan_id = 60, cidr = "10.5.0.0/24", dhcp_pool = "10.5.0.1-10.5.0.253", nodes = ["10.5.0.1-10.5.0.2"] }
+  comp-ew = { vlan_id = 70, cidr = "10.10.0.0/24", dhcp_pool = "10.10.0.1-10.10.0.253", nodes = ["10.10.0.1-10.10.0.3"], address_list = "comp-nodes" }
+  comp-ns = { vlan_id = 80, cidr = "10.10.1.0/24" }
+}
 
 ip_addresses = [
-  { interface = "ctrl", address = "10.1.0.254/24" },
-  { interface = "core", address = "10.2.0.254/24" },
-  { interface = "svc", address = "10.3.0.254/24" },
-  { interface = "stor", address = "10.4.0.254/24" },
-  { interface = "ai", address = "10.5.0.254/24" },
-  { interface = "comp-ew", address = "10.10.0.254/24" },
-  { interface = "comp-ns", address = "10.10.1.254/24" },
-  { interface = "containers", address = "172.17.0.1/24" }
-]
-
-ip_pools = [
-  { name = "ctrl", ranges = ["10.1.0.1-10.1.0.253"] },
-  { name = "core", ranges = ["10.2.0.1-10.2.0.253"] },
-  { name = "svc", ranges = ["10.3.0.1-10.3.0.253"] },
-  { name = "stor", ranges = ["10.4.0.1-10.4.0.253"] },
-  { name = "ai", ranges = ["10.5.0.1-10.5.0.253"] },
-  { name = "comp-ew", ranges = ["10.10.0.1-10.10.0.253"] },
-]
-
-dhcp_server_networks = [
-  { address = "10.1.0.0/24", gateway = "10.1.0.254", dns_server = ["10.1.0.254"] },
-  { address = "10.2.0.0/24", gateway = "10.2.0.254", dns_server = ["10.2.0.254"] },
-  { address = "10.3.0.0/24", gateway = "10.3.0.254", dns_server = ["10.3.0.254"] },
-  { address = "10.4.0.0/24", gateway = "10.4.0.254", dns_server = ["10.4.0.254"] },
-  { address = "10.5.0.0/24", gateway = "10.5.0.254", dns_server = ["10.5.0.254"] },
-  { address = "10.10.0.0/24", gateway = "10.10.0.254", dns_server = ["10.10.0.254"] },
-]
-
-dhcp_servers = [
-  { address_pool = "ctrl", interface = "ctrl", name = "ctrl" },
-  { address_pool = "core", interface = "core", name = "core" },
-  { address_pool = "svc", interface = "svc", name = "svc" },
-  { address_pool = "stor", interface = "stor", name = "stor" },
-  { address_pool = "ai", interface = "ai", name = "ai" },
-  { address_pool = "comp-ew", interface = "comp-ew", name = "comp-ew" },
+  { interface = "containers", address = "172.17.0.1/24" },
 ]
 
 dns_records = [
@@ -101,22 +67,12 @@ firewall_rules = [
   { chain = "forward", action = "drop", in_interface_list = "Containers", out_interface_list = "phorge", comment = "tofu;;; Drop Containers to phorge" },
 ]
 
-firewall_address_lists = [
-  { list = "ctrl-nodes", address = "10.1.0.1-10.1.0.3" },
-  { list = "core-nodes", address = "10.2.0.1-10.2.0.3" },
-  { list = "svc-nodes", address = "10.3.0.1-10.3.0.3" },
-  { list = "stor-nodes", address = "10.4.0.1" },
-  { list = "ai-nodes", address = "10.5.0.1-10.5.0.2" },
-  { list = "comp-nodes", address = "10.10.0.1-10.10.0.3" },
-]
-
 firewall_nat_rules = [
   { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "80", to_addresses = "172.17.0.2", to_ports = "8080", in_interface_list = "WAN", comment = "tofu;;; Allow 80/TCP to Haproxy" },
   { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "443", to_addresses = "172.17.0.2", to_ports = "8443", in_interface_list = "WAN", comment = "tofu;;; Allow 443/TCP to Haproxy" },
   { chain = "srcnat", action = "masquerade", src_address = "172.17.0.0/24", comment = "tofu;;; Masquerade outbound traffic for docker" },
 ]
 interface_lists = [
-  { name = "phorge", members = ["ctrl", "core", "svc", "stor", "ai", "comp-ew", "comp-ns"] },
   { name = "Containers", members = ["containers", "veth1"] },
 ]
 

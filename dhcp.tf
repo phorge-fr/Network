@@ -1,22 +1,22 @@
 resource "routeros_ip_dhcp_server_network" "dhcp_networks" {
-  for_each = { for net in var.dhcp_server_networks : net.address => net }
+  for_each = { for name, n in local.dhcp_networks : n.cidr => n }
 
-  address    = each.value.address
+  address    = each.key
   gateway    = each.value.gateway
-  dns_server = each.value.dns_server
-  comment    = each.value.comment
+  dns_server = [each.value.gateway]
+  comment    = local.comment
 }
 
 resource "routeros_ip_dhcp_server" "dhcp_servers" {
-  for_each = { for s in var.dhcp_servers : s.name => s }
+  for_each = local.dhcp_networks
 
-  address_pool = each.value.address_pool
-  interface    = each.value.interface
-  name         = each.value.name
-  comment      = each.value.comment
+  name         = each.key
+  interface    = routeros_interface_vlan.vlans[each.key].name
+  address_pool = routeros_ip_pool.dhcp_pools[each.key].name
+  comment      = local.comment
+
   depends_on = [
-    routeros_ip_pool.dhcp_pools,
     routeros_ip_dhcp_server_network.dhcp_networks,
-    routeros_ip_address.ip_addresses
+    routeros_ip_address.ip_addresses,
   ]
 }

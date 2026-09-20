@@ -1,9 +1,8 @@
 resource "routeros_file" "files" {
   for_each = { for f in var.files : f.name => f }
 
-  name       = each.value.name
-  contents   = file(each.value.contents)
-  depends_on = [routeros_container_mounts.container_mounts]
+  name     = each.value.name
+  contents = file(each.value.contents)
 }
 
 resource "routeros_container_mounts" "container_mounts" {
@@ -25,7 +24,7 @@ resource "routeros_container" "containers" {
   for_each = { for c in var.containers : c.hostname => c }
 
   remote_image  = each.value.remote_image
-  interface     = each.value.interface
+  interface     = lookup(local.interface_names, each.value.interface, each.value.interface)
   hostname      = each.value.hostname
   start_on_boot = each.value.start_on_boot
   root_dir      = each.value.root_dir
@@ -38,6 +37,7 @@ resource "routeros_container" "containers" {
 
   depends_on = [
     routeros_container_config.container_config,
-    routeros_container_mounts.container_mounts
+    routeros_container_mounts.container_mounts,
+    routeros_file.files,
   ]
 }

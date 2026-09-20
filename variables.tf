@@ -14,20 +14,51 @@ variable "password" {
   sensitive   = true
 }
 
-variable "vlans" {
-  description = "List of VLAN configurations"
-  type = list(object({
-    interface = string
-    name      = string
-    vlan_id   = number
-    mtu       = optional(number)
-    comment   = optional(string, "tofu;;;")
+variable "networks" {
+  description = "Workload VLANs, keyed by name. The name is the interface name and the router takes the last usable address of the subnet. DHCP, the phorge interface list and the <name>-nodes address list derive from it."
+  type = map(object({
+    vlan_id      = number
+    cidr         = string
+    mtu          = optional(number, 8152)
+    dhcp_pool    = optional(string)
+    nodes        = optional(list(string), [])
+    address_list = optional(string)
   }))
-  default = []
+
+  validation {
+    condition     = alltrue([for n in values(var.networks) : n.vlan_id >= 1 && n.vlan_id <= 4094])
+    error_message = "vlan_id must be between 1 and 4094."
+  }
+
+  validation {
+    condition     = length(distinct([for n in values(var.networks) : n.vlan_id])) == length(var.networks)
+    error_message = "Each network needs its own vlan_id."
+  }
+
+  validation {
+    condition     = alltrue([for n in values(var.networks) : can(cidrhost(n.cidr, 0))])
+    error_message = "cidr must be a valid IPv4 CIDR such as 10.1.0.0/24."
+  }
+
+  validation {
+    condition     = alltrue([for n in values(var.networks) : n.mtu >= 68 && n.mtu <= 65535])
+    error_message = "mtu must be between 68 and 65535."
+  }
+
+  validation {
+    condition     = alltrue([for name in keys(var.networks) : length(name) <= 15])
+    error_message = "Network names become interface names, which RouterOS limits to 15 characters."
+  }
+}
+
+variable "vlan_parent_interface" {
+  description = "Interface that carries the VLAN sub-interfaces"
+  type        = string
+  default     = "bridge"
 }
 
 variable "ip_addresses" {
-  description = "List of IP address configurations"
+  description = "Extra IP addresses on interfaces that are not in networks (the gateway address of each network is derived)"
   type = list(object({
     interface = string
     address   = string
@@ -35,38 +66,11 @@ variable "ip_addresses" {
     comment   = optional(string, "tofu;;;")
   }))
   default = []
-}
 
-variable "ip_pools" {
-  description = "List of IP pool configurations"
-  type = list(object({
-    name    = string
-    ranges  = list(string)
-    comment = optional(string, "tofu;;;")
-  }))
-  default = []
-}
-
-variable "dhcp_server_networks" {
-  description = "List of DHCP server network configurations"
-  type = list(object({
-    address    = string
-    gateway    = string
-    dns_server = optional(list(string), [])
-    comment    = optional(string, "tofu;;;")
-  }))
-  default = []
-}
-
-variable "dhcp_servers" {
-  description = "List of DHCP server configurations"
-  type = list(object({
-    address_pool = string
-    interface    = string
-    name         = string
-    comment      = optional(string, "tofu;;;")
-  }))
-  default = []
+  validation {
+    condition     = alltrue([for a in var.ip_addresses : can(cidrhost(a.address, 0))])
+    error_message = "address must be an IPv4 address with a prefix length, such as 172.17.0.1/24."
+  }
 }
 
 variable "dns_records" {
@@ -78,7 +82,11 @@ variable "dns_records" {
     type    = string
     comment = optional(string, "tofu;;;")
   }))
-  default = []
+
+  validation {
+    condition     = alltrue([for r in var.dns_records : contains(["A", "AAAA", "CNAME", "FWD", "MX", "NS", "NXDOMAIN", "SRV", "TXT"], r.type)])
+    error_message = "type is not a RouterOS DNS record type."
+  }
 }
 
 variable "firewall_rules" {
@@ -149,11 +157,25 @@ variable "firewall_rules" {
     tls_host                  = optional(string)
     ttl                       = optional(string)
   }))
-  default = []
+
+  validation {
+    condition     = alltrue([for r in var.firewall_rules : contains(["input", "forward", "output"], r.chain)])
+    error_message = "chain must be input, forward or output."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.firewall_rules : contains(
+        ["accept", "add-dst-to-address-list", "add-src-to-address-list", "drop", "fasttrack-connection", "jump", "log", "passthrough", "reject", "return", "tarpit"],
+        r.action
+      )
+    ])
+    error_message = "action is not a RouterOS firewall filter action."
+  }
 }
 
 variable "firewall_address_lists" {
-  description = "List of address lists"
+  description = "Extra address list entries (the <name>-nodes lists are derived from networks)"
   type = list(object({
     list    = string
     address = string
@@ -177,11 +199,25 @@ variable "firewall_nat_rules" {
     dst_port          = optional(string)
     comment           = optional(string, "tofu;;;")
   }))
-  default = []
+
+  validation {
+    condition     = alltrue([for r in var.firewall_nat_rules : contains(["srcnat", "dstnat"], r.chain)])
+    error_message = "chain must be srcnat or dstnat."
+  }
+
+  validation {
+    condition = alltrue([
+      for r in var.firewall_nat_rules : contains(
+        ["accept", "add-dst-to-address-list", "add-src-to-address-list", "dst-nat", "jump", "log", "masquerade", "netmap", "passthrough", "redirect", "return", "same", "src-nat"],
+        r.action
+      )
+    ])
+    error_message = "action is not a RouterOS NAT action."
+  }
 }
 
 variable "interface_lists" {
-  description = "List of interface lists"
+  description = "Extra interface lists (the phorge list is derived from networks)"
   type = list(object({
     name    = string
     comment = optional(string, "tofu;;;")
@@ -241,7 +277,6 @@ variable "veths" {
     gateway = string
     comment = optional(string, "tofu;;;")
   }))
-  default = []
 }
 
 variable "bridges" {
@@ -251,7 +286,6 @@ variable "bridges" {
     comment = optional(string, "tofu;;;")
     ports   = optional(list(string), [])
   }))
-  default = []
 }
 
 variable "files" {
@@ -260,8 +294,6 @@ variable "files" {
     name     = string
     contents = string
   }))
-  default = []
-
 }
 
 variable "container_mounts" {
@@ -271,8 +303,6 @@ variable "container_mounts" {
     src  = string
     dst  = string
   }))
-  default = []
-
 }
 
 variable "container_config" {
@@ -300,6 +330,4 @@ variable "containers" {
     cmd           = optional(string)
     comment       = optional(string, "tofu;;;")
   }))
-  default = []
-
 }

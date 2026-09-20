@@ -90,7 +90,7 @@ resource "routeros_ip_firewall_filter" "firewall_rules" {
 }
 
 resource "routeros_ip_firewall_addr_list" "address_lists" {
-  for_each = { for list in var.firewall_address_lists : list.list => list }
+  for_each = local.address_list_entries
 
   list    = each.value.list
   address = each.value.address
