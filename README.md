@@ -26,15 +26,16 @@ firewall.tf          Filter rules, NAT rules, address lists
 routing.tf           BGP connections
 containers.tf        Container runtime, mounts, uploaded files, containers
 encryption.tf        State and plan encryption; the passphrase comes from TF_ENCRYPTION
+moved.tf             Pending state moves (delete once applied)
 terraform.tfvars     Values: networks, DNS records, firewall, NAT, containers
 .terraform.lock.hcl  Pinned provider version and hashes (committed)
-templates/           HAProxy configuration uploaded to the router
+templates/           HAProxy configuration template, rendered with the ingress addresses of networks
 certs/               Local trust anchor: the router CA (ignored by git, see the runbook)
 defaults/            RouterOS scripts: factory defaults, base configuration, Phorge.dpk
 docs/                Architecture and runbooks
 ```
 
-One entry in `networks` (name, VLAN ID, CIDR, optionally a DHCP pool and node ranges) creates the VLAN, the router address (the last usable address of the subnet), the DHCP pool, network and server, the membership of the `phorge` interface list and the `<name>-nodes` address list.
+One entry in `networks` (name, VLAN ID, CIDR, optionally a DHCP pool, node ranges and the host number of the public ingress) creates the VLAN, the router address (the last usable address of the subnet), the DHCP pool, network and server, the membership of the `phorge` interface list and the `<name>-nodes` address list. The ingress addresses also feed the HAProxy configuration and the rules that let the container reach them, so they exist in one place.
 
 ## Requirements
 
@@ -78,7 +79,7 @@ The VLANs, IP addresses, bridges and bridge ports have `prevent_destroy`: a plan
 ## Conventions
 
 - Every object created by OpenTofu carries a comment starting with `tofu;;;`.
-- Firewall rules are inserted with `place_before`, a position in the router's rule list. See [the runbook](docs/runbook-reset.md#firewall-rule-order) before adding or reordering rules.
+- Firewall rules have a stable `id` and are placed on the router in list order by `routeros_move_items`. A rule with `before` sits right above the factory rule of that name in the same chain, the others go to the end of the chain. See [the runbook](docs/runbook-reset.md#firewall-rule-order).
 - The state is local (`terraform.tfstate`, ignored by git) and encrypted with OpenTofu's native state encryption. Every command needs `source .env`, otherwise it stops with `Reference to undeclared key provider`. Keep a copy of the state after every apply.
 - All three Phorge repositories are public. Never commit `.env`, the state (not even encrypted), a reset-edited `base_configuration.rsc` or any other plaintext secret.
 - Commit messages follow Conventional Commits (`fix(fw): ...`, `chore(haproxy): ...`).

@@ -134,7 +134,7 @@ The storage node exports `/mnt/main/csi-svc` over NFSv4 to the three svc nodes a
 
 Forgejo also serves Git over SSH on 10.3.0.13:22, internal only.
 
-HAProxy ([templates/haproxy.cfg](../templates/haproxy.cfg)) routes plain HTTP on 8080 (redirect to HTTPS for the five known hosts, everything else to the control ingress) and TLS on 8443 by SNI without terminating it: `iaas` to the Incus nodes, `auth`, `monitoring` and `status` to the core ingress, `git` to the svc ingress, anything else to the control ingress.
+HAProxy ([templates/haproxy.cfg.tftpl](../templates/haproxy.cfg.tftpl)) routes plain HTTP on 8080 (redirect to HTTPS for the five known hosts, everything else to the control ingress) and TLS on 8443 by SNI without terminating it: `iaas` to the Incus nodes, `auth`, `monitoring` and `status` to the core ingress, `git` to the svc ingress, anything else to the control ingress. The ingress addresses and the Incus node addresses are not typed in the template: they come from `networks` (`ingress` and `nodes`), and the rules that let the container reach the ingresses use the same data.
 
 Client addresses reach the ingresses through the PROXY protocol v2. HAProxy traffic is masqueraded by the router (NAT rule for 172.17.0.0/24), so each Traefik trusts PROXY headers only from the router address of its VLAN (`x.0.254/32`, set in `overlays/*/controllers/traefik/traefik-public-patch.yml`). Changing that NAT rule, the HAProxy source or the Traefik `trustedIPs` breaks client address preservation.
 
@@ -236,12 +236,12 @@ Things that disagree between files or between a file and the live router. None i
 1. Network: one entry in `networks` (the VLAN, the router address, the DHCP pool and server, the `phorge` interface list membership and the `<name>-nodes` address list are derived), plus `dns_records`.
 2. Ansible: inventory group, `firewall_allowed_ports` and `firewall_trusted_sources` in its `group_vars`.
 3. FrontPlane: `clusters/<name>/setup/` (k0s config, `ip-pools.yml`, the interface name in `l2announcementpolicy.yml`) and the Traefik patches in `overlays/<name>/controllers/traefik/`.
-4. If it is published: `templates/haproxy.cfg`, then the router rule towards its ingress.
+4. If it is published: `ingress = 11` on its entry in `networks`, `templates/haproxy.cfg.tftpl`, then a router rule towards its ingress with `dst_ingress`.
 5. Update this document.
 
 **New flow between two VLANs**
 
-1. Router: a rule in `firewall_rules`, with `in_interface` set, above the drops.
+1. Router: a rule in `firewall_rules` with a unique `id`, `before = "defconf: drop invalid"` (forward accepts) and `in_interface` set.
 2. Host: `firewall_allowed_ports` (or `firewall_published_ports` for Docker) in Ansible.
 3. Pods: a NetworkPolicy or CiliumNetworkPolicy in FrontPlane if the destination is a pod.
 4. After applying, check that the rule counts packets: `/ip firewall filter print stats`.
@@ -250,5 +250,5 @@ Things that disagree between files or between a file and the live router. None i
 
 1. DNS record at Cloudflare.
 2. FrontPlane: an Ingress with class `traefik-public` and `cert-manager.io/cluster-issuer: public-issuer`.
-3. `templates/haproxy.cfg`: the host in the HTTP redirect ACLs and a `use_backend` line on the SNI frontend.
+3. `templates/haproxy.cfg.tftpl`: the host in the HTTP redirect ACLs and a `use_backend` line on the SNI frontend.
 4. A router rule from `containers` to that cluster's ingress, if it is a new cluster.

@@ -100,18 +100,15 @@ A reset router has none of the objects that the state remembers, and RouterOS id
 
 ### Firewall rule order
 
-Rules are inserted with `place_before` positions in the router's rule list, not by name. Today's values only hold on a router that carries the factory defconf rules:
+The order of the rules is declared in `terraform.tfvars`: `firewall_rules` is a list, every rule has a stable `id`, and `routeros_move_items` places the rules on the router in list order. A rule with `before` sits right above the factory rule of that comment in the same chain (`defconf: drop invalid` for the forward accepts, `defconf: drop all not coming from LAN` for the input rules). A rule without `before` goes to the end of the chain. The factory rules are found by chain and comment, so this works on any router that carries the factory defconf rules, and the plan stops with a clear message if one of them is missing.
 
-- `place_before = "5"`: just above the defconf input rule `drop all not coming from LAN` (index 5).
-- `place_before = "12"`: just above the defconf forward rule `drop invalid`, which sits at index 10 on a factory router and at 12 once the two DNS input rules are above it.
-
-OpenTofu creates the rules in parallel and by resource key, not in file order, so a full re-apply can leave them in the wrong places. After every apply that creates firewall rules, check the order and move rules by hand if needed:
+After the first apply on a fresh router, check the result:
 
 ```bash
 ssh user@192.168.2.254 '/ip firewall filter print'
 ```
 
-The accept rules must sit above `drop invalid` and `drop all from WAN not DSTNATed`, and the four custom drops at the end. Making the order declarative with the provider's `routeros_move_items` resource is planned.
+The accept rules must sit above `drop invalid` and `drop all from WAN not DSTNATed`, and the custom drops at the end. `tofu plan` also reports a rule that was moved by hand, because the provider reads the real order of the rules it manages.
 
 ## 7. Check the result
 
