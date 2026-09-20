@@ -10,7 +10,7 @@ vlans = [
   { interface = "bridge", name = "core", vlan_id = 30, mtu = 8152 },
   { interface = "bridge", name = "svc", vlan_id = 40, mtu = 8152 },
   { interface = "bridge", name = "stor", vlan_id = 50, mtu = 8152 },
-  { interface = "bridge", name = "ai", vlan_id = 60, mtu = 8152},
+  { interface = "bridge", name = "ai", vlan_id = 60, mtu = 8152 },
   { interface = "bridge", name = "comp-ew", vlan_id = 70, mtu = 8152 },
   { interface = "bridge", name = "comp-ns", vlan_id = 80, mtu = 8152 },
 ]
@@ -23,16 +23,16 @@ ip_addresses = [
   { interface = "ai", address = "10.5.0.254/24" },
   { interface = "comp-ew", address = "10.10.0.254/24" },
   { interface = "comp-ns", address = "10.10.1.254/24" },
-  { interface = "containers", address = "172.17.0.1/24"}
+  { interface = "containers", address = "172.17.0.1/24" }
 ]
 
 ip_pools = [
-  { name = "ctrl", ranges = ["10.1.0.1-10.1.0.253"]},
-  { name = "core", ranges = ["10.2.0.1-10.2.0.253"]},
-  { name = "svc", ranges = ["10.3.0.1-10.3.0.253"]},
-  { name = "stor", ranges = ["10.4.0.1-10.4.0.253"]},
-  { name = "ai", ranges = ["10.5.0.1-10.5.0.253"]},
-  { name = "comp-ew", ranges = ["10.10.0.1-10.10.0.253"]},
+  { name = "ctrl", ranges = ["10.1.0.1-10.1.0.253"] },
+  { name = "core", ranges = ["10.2.0.1-10.2.0.253"] },
+  { name = "svc", ranges = ["10.3.0.1-10.3.0.253"] },
+  { name = "stor", ranges = ["10.4.0.1-10.4.0.253"] },
+  { name = "ai", ranges = ["10.5.0.1-10.5.0.253"] },
+  { name = "comp-ew", ranges = ["10.10.0.1-10.10.0.253"] },
 ]
 
 dhcp_server_networks = [
@@ -85,18 +85,18 @@ dns_records = [
 
 
 firewall_rules = [
-  { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", place_before="5", comment = "tofu;;; Allow TCP DNS from !LAN" },
-  { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", place_before="5", comment = "tofu;;; Allow UDP DNS from !LAN" },
-  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "core", dst_address = "10.2.0.11", dst_port="80,443", protocol = "tcp", place_before="12", comment = "tofu;;; Allow Hproxy to core cluster Ingress"},
-  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "svc", dst_address = "10.3.0.11", dst_port="80,443", protocol = "tcp", place_before="12", comment = "tofu;;; Allow Hproxy to svc cluster Ingress"},
-  { chain = "forward", action = "accept", src_address_list = "svc-nodes", dst_address_list = "stor-nodes", dst_port = "2049", protocol = "tcp", place_before="12", comment = "tofu;;; Allow svc cluster nodes to stor nodes over NFS/TCP" },
-  { chain = "forward", action = "accept", src_address_list = "svc-nodes", dst_address_list = "stor-nodes", dst_port = "2049", protocol = "udp", place_before="12", comment = "tofu;;; Allow svc cluster nodes to stor nodes over NFS/UDP" },
-  { chain = "forward", action = "accept", src_address_list = "ctrl-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", place_before="12", comment = "tofu;;; Allow ctrl cluster nodes to push metrics/logs to core (Alloy)" },
-  { chain = "forward", action = "accept", src_address_list = "svc-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", place_before="12", comment = "tofu;;; Allow svc cluster nodes to push metrics/logs to core (Alloy)" },
-  { chain = "forward", action = "accept", src_address_list = "stor-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", place_before="12", comment = "tofu;;; Allow stor nodes to push metrics/logs to core (Alloy)" },
-  { chain = "forward", action = "accept", src_address_list = "core-nodes", dst_address_list = "stor-nodes", dst_port = "9000", protocol = "tcp", place_before="12", comment = "tofu;;; Allow core cluster nodes to stor rustfs S3 (Longhorn backups)" },
-  { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", comment = "tofu;;; Drop overlay network"},
-  { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.2.0/24", comment = "tofu;;; Drop 'this' network"},
+  { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", place_before = "5", comment = "tofu;;; Allow TCP DNS from !LAN" },
+  { chain = "input", action = "accept", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", place_before = "5", comment = "tofu;;; Allow UDP DNS from !LAN" },
+  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "core", dst_address = "10.2.0.11", dst_port = "80,443", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow Hproxy to core cluster Ingress" },
+  { chain = "forward", action = "accept", in_interface = "containers", out_interface = "svc", dst_address = "10.3.0.11", dst_port = "80,443", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow Hproxy to svc cluster Ingress" },
+  { chain = "forward", action = "accept", src_address_list = "svc-nodes", dst_address_list = "stor-nodes", dst_port = "2049", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow svc cluster nodes to stor nodes over NFS/TCP" },
+  { chain = "forward", action = "accept", src_address_list = "svc-nodes", dst_address_list = "stor-nodes", dst_port = "2049", protocol = "udp", place_before = "12", comment = "tofu;;; Allow svc cluster nodes to stor nodes over NFS/UDP" },
+  { chain = "forward", action = "accept", src_address_list = "ctrl-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow ctrl cluster nodes to push metrics/logs to core (Alloy)" },
+  { chain = "forward", action = "accept", src_address_list = "svc-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow svc cluster nodes to push metrics/logs to core (Alloy)" },
+  { chain = "forward", action = "accept", src_address_list = "stor-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow stor nodes to push metrics/logs to core (Alloy)" },
+  { chain = "forward", action = "accept", src_address_list = "core-nodes", dst_address_list = "stor-nodes", dst_port = "9000", protocol = "tcp", place_before = "12", comment = "tofu;;; Allow core cluster nodes to stor rustfs S3 (Longhorn backups)" },
+  { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", comment = "tofu;;; Drop overlay network" },
+  { chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.2.0/24", comment = "tofu;;; Drop 'this' network" },
   { chain = "forward", action = "drop", in_interface_list = "phorge", out_interface_list = "phorge", comment = "tofu;;; Drop phorge to phorge" },
   { chain = "forward", action = "drop", in_interface_list = "Containers", out_interface_list = "phorge", comment = "tofu;;; Drop Containers to phorge" },
 ]
@@ -115,12 +115,12 @@ firewall_nat_rules = [
   { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "443", to_addresses = "172.17.0.2", to_ports = "8443", in_interface_list = "WAN", comment = "tofu;;; Allow 443/TCP to Haproxy" },
   { chain = "srcnat", action = "masquerade", src_address = "172.17.0.0/24", comment = "tofu;;; Masquerade outbound traffic for docker" },
 ]
-interface_lists = [ 
-  { name = "phorge", members = [ "ctrl", "core", "svc", "stor", "ai", "comp-ew", "comp-ns" ] },
-  { name = "Containers", members = [ "containers", "veth1" ] },
+interface_lists = [
+  { name = "phorge", members = ["ctrl", "core", "svc", "stor", "ai", "comp-ew", "comp-ns"] },
+  { name = "Containers", members = ["containers", "veth1"] },
 ]
 
-vxlan_interfaces = [ 
+vxlan_interfaces = [
 ]
 
 vxlan_vteps = [
@@ -135,22 +135,22 @@ vxlan_vteps = [
 #   { as = 65535, comment = "tofu;;; IaaS clever-panda", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "clever-panda", remote = { address = "10.1.0.6" , as = 65535 } }
 # ]
 
-veths = [ {
+veths = [{
   name = "veth1", address = ["172.17.0.2/24"], gateway = "172.17.0.1", comment = "tofu;;; Containers Veth"
-} ]
+}]
 
-bridges = [ {
+bridges = [{
   name = "containers", ports = ["veth1"], comment = "tofu;;;  Containers Bridge"
-} ]
+}]
 
-files = [ {
+files = [{
   name = "usb1/haproxy-etc/haproxy.cfg", contents = "templates/haproxy.cfg"
-} ]
+}]
 
-container_mounts = [ {
+container_mounts = [{
   name = "haproxy_etc", src = "/usb1/haproxy-etc", dst = "/usr/local/etc/haproxy"
-} ]
+}]
 
-containers = [ {
-  hostname = "haproxy", remote_image = "arm32v7/haproxy:latest", mounts = [ "haproxy_etc" ], logging = true, root_dir = "usb1/images/haproxy", interface = "veth1", start_on_boot = true, user = "0:0"
-} ]
+containers = [{
+  hostname = "haproxy", remote_image = "arm32v7/haproxy:latest", mounts = ["haproxy_etc"], logging = true, root_dir = "usb1/images/haproxy", interface = "veth1", start_on_boot = true, user = "0:0"
+}]

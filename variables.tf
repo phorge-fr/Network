@@ -11,7 +11,7 @@ variable "username" {
 variable "password" {
   description = "RouterOS password"
   type        = string
-  sensitive = true
+  sensitive   = true
 }
 
 variable "vlans" {
@@ -40,9 +40,9 @@ variable "ip_addresses" {
 variable "ip_pools" {
   description = "List of IP pool configurations"
   type = list(object({
-    name      = string
-    ranges = list(string)
-    comment   = optional(string, "tofu;;;")
+    name    = string
+    ranges  = list(string)
+    comment = optional(string, "tofu;;;")
   }))
   default = []
 }
@@ -50,12 +50,12 @@ variable "ip_pools" {
 variable "dhcp_server_networks" {
   description = "List of DHCP server network configurations"
   type = list(object({
-    address = string
-    gateway = string
+    address    = string
+    gateway    = string
     dns_server = optional(list(string), [])
-    comment = optional(string, "tofu;;;")
+    comment    = optional(string, "tofu;;;")
   }))
-  default = [] 
+  default = []
 }
 
 variable "dhcp_servers" {
@@ -87,67 +87,67 @@ variable "firewall_rules" {
     action = string
     chain  = string
 
-    address_list           = optional(string)
-    address_list_timeout   = optional(string)
-    comment                = optional(string)
-    connection_bytes       = optional(string)
-    connection_limit       = optional(string)
-    connection_mark        = optional(string)
-    connection_nat_state   = optional(string)
-    connection_rate        = optional(string)
-    connection_state       = optional(string)
-    connection_type        = optional(string)
-    content                = optional(string)
-    disabled               = optional(bool)
-    dscp                   = optional(number)
-    dst_address            = optional(string)
-    dst_address_list       = optional(string)
-    dst_address_type       = optional(string)
-    dst_limit              = optional(string)
-    dst_port               = optional(string)
-    fragment               = optional(bool)
-    hotspot                = optional(string)
-    hw_offload             = optional(bool)
-    icmp_options           = optional(string)
-    in_bridge_port         = optional(string)
-    in_bridge_port_list    = optional(string)
-    in_interface           = optional(string)
-    in_interface_list      = optional(string)
-    ingress_priority       = optional(number)
-    ipsec_policy           = optional(string)
-    ipv4_options           = optional(string)
-    jump_target            = optional(string)
-    layer7_protocol        = optional(string)
-    limit                  = optional(string)
-    log                    = optional(bool)
-    log_prefix             = optional(string)
-    nth                    = optional(string)
-    out_bridge_port        = optional(string)
-    out_bridge_port_list   = optional(string)
-    out_interface          = optional(string)
-    out_interface_list     = optional(string)
-    packet_mark            = optional(string)
-    packet_size            = optional(string)
+    address_list              = optional(string)
+    address_list_timeout      = optional(string)
+    comment                   = optional(string)
+    connection_bytes          = optional(string)
+    connection_limit          = optional(string)
+    connection_mark           = optional(string)
+    connection_nat_state      = optional(string)
+    connection_rate           = optional(string)
+    connection_state          = optional(string)
+    connection_type           = optional(string)
+    content                   = optional(string)
+    disabled                  = optional(bool)
+    dscp                      = optional(number)
+    dst_address               = optional(string)
+    dst_address_list          = optional(string)
+    dst_address_type          = optional(string)
+    dst_limit                 = optional(string)
+    dst_port                  = optional(string)
+    fragment                  = optional(bool)
+    hotspot                   = optional(string)
+    hw_offload                = optional(bool)
+    icmp_options              = optional(string)
+    in_bridge_port            = optional(string)
+    in_bridge_port_list       = optional(string)
+    in_interface              = optional(string)
+    in_interface_list         = optional(string)
+    ingress_priority          = optional(number)
+    ipsec_policy              = optional(string)
+    ipv4_options              = optional(string)
+    jump_target               = optional(string)
+    layer7_protocol           = optional(string)
+    limit                     = optional(string)
+    log                       = optional(bool)
+    log_prefix                = optional(string)
+    nth                       = optional(string)
+    out_bridge_port           = optional(string)
+    out_bridge_port_list      = optional(string)
+    out_interface             = optional(string)
+    out_interface_list        = optional(string)
+    packet_mark               = optional(string)
+    packet_size               = optional(string)
     per_connection_classifier = optional(string)
-    place_before           = optional(string)
-    port                   = optional(string)
-    priority               = optional(number)
-    protocol               = optional(string)
-    psd                    = optional(string)
-    random                 = optional(number)
-    reject_with            = optional(string)
-    routing_mark           = optional(string)
-    routing_table          = optional(string)
-    src_address            = optional(string)
-    src_address_list       = optional(string)
-    src_address_type       = optional(string)
-    src_mac_address        = optional(string)
-    src_port               = optional(string)
-    tcp_flags              = optional(string)
-    tcp_mss                = optional(string)
-    time                   = optional(string)
-    tls_host               = optional(string)
-    ttl                    = optional(string)
+    place_before              = optional(string)
+    port                      = optional(string)
+    priority                  = optional(number)
+    protocol                  = optional(string)
+    psd                       = optional(string)
+    random                    = optional(number)
+    reject_with               = optional(string)
+    routing_mark              = optional(string)
+    routing_table             = optional(string)
+    src_address               = optional(string)
+    src_address_list          = optional(string)
+    src_address_type          = optional(string)
+    src_mac_address           = optional(string)
+    src_port                  = optional(string)
+    tcp_flags                 = optional(string)
+    tcp_mss                   = optional(string)
+    time                      = optional(string)
+    tls_host                  = optional(string)
+    ttl                       = optional(string)
   }))
   default = []
 }
@@ -193,12 +193,12 @@ variable "interface_lists" {
 variable "vxlan_interfaces" {
   description = "List of VXLAN interfaces"
   type = list(object({
-    name      = string
-    vni       = number
-    mtu       = optional(number)
-    comment   = optional(string, "tofu;;;")
-    disabled  = optional(bool)
-    hw        = optional(bool)
+    name     = string
+    vni      = number
+    mtu      = optional(number)
+    comment  = optional(string, "tofu;;;")
+    disabled = optional(bool)
+    hw       = optional(bool)
   }))
   default = []
 }
@@ -211,14 +211,14 @@ variable "vxlan_vteps" {
     port      = optional(number)
     comment   = optional(string, "tofu;;;")
   }))
-  default = []  
+  default = []
 }
 
 variable "bgp_connections" {
   description = "List of BGP connections"
   type = list(object({
-    name           = string
-    as             = number
+    name = string
+    as   = number
     remote = object({
       address = string
       as      = number
@@ -258,22 +258,22 @@ variable "bridges" {
 variable "files" {
   description = "List of files to upload to the RouterOS device"
   type = list(object({
-    name        = string
-    contents    = string
+    name     = string
+    contents = string
   }))
   default = []
-  
+
 }
 
 variable "container_mounts" {
   description = "List of container mounts"
   type = list(object({
-    name           = string
-    src            = string
-    dst            = string
+    name = string
+    src  = string
+    dst  = string
   }))
   default = []
-  
+
 }
 
 variable "container_config" {
@@ -293,15 +293,15 @@ variable "containers" {
     interface     = string
     start_on_boot = optional(bool, true)
     # stop_signal   = optional(string, "15-SIGTERM")
-    root_dir      = optional(string)
-    mounts        = optional(list(string), [])
-    logging       = optional(bool, true)
-    hostname      = string
-    running       = optional(bool, true)
-    user          = optional(string)
-    cmd           = optional(string)
-    comment       = optional(string, "tofu;;;")
+    root_dir = optional(string)
+    mounts   = optional(list(string), [])
+    logging  = optional(bool, true)
+    hostname = string
+    running  = optional(bool, true)
+    user     = optional(string)
+    cmd      = optional(string)
+    comment  = optional(string, "tofu;;;")
   }))
   default = []
-  
+
 }
