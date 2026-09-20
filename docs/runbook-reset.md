@@ -1,0 +1,122 @@
+# Runbook: reset and bootstrap the router
+
+Use it when the router has to be rebuilt from scratch: factory reset, replacement hardware, or a configuration that is beyond repair. The router is the only gateway of the infrastructure, so every step below takes the whole network down until the VLANs and the firewall are back.
+
+## Before you reset
+
+1. Save the running configuration and copy it off the router:
+
+   ```bash
+   ssh user@192.168.2.254 '/export file=pre-reset'
+   scp user@192.168.2.254:/pre-reset.rsc ./
+   ```
+
+2. Copy the OpenTofu state: `cp terraform.tfstate terraform.tfstate.pre-reset`.
+3. Have physical access: after the reset, MAC-server and neighbor discovery are disabled, so a lockout can only be fixed over IP on the management LAN, on the serial console, or with the reset button.
+4. Note that every service published through HAProxy is offline until the container and its configuration file are back.
+
+## 1. Prepare the base configuration
+
+Edit `defaults/base_configuration.rsc` and replace the placeholders. Do not commit the edited file.
+
+| Placeholder | Meaning |
+|---|---|
+| `<1234>` | PIN of the router LCD |
+| `<us3r>` | Name of the administrator account |
+| `<p4ssw0rd>` | Password of that account |
+
+## 2. Reset
+
+```bash
+ssh admin@192.168.88.1 /system/reset-configuration
+```
+
+Keep the factory defaults (do not pass `no-defaults`): [default_configuration.rsc](../defaults/default_configuration.rsc) is what makes the router reachable on 192.168.88.1 afterwards.
+
+## 3. Upload the DPK and reboot
+
+```bash
+scp defaults/Phorge.dpk admin@192.168.88.1:/
+ssh admin@192.168.88.1 /system/reboot
+```
+
+## 4. Apply the base configuration
+
+```bash
+scp defaults/base_configuration.rsc admin@192.168.88.1:/
+ssh admin@192.168.88.1 import base_configuration.rsc
+```
+
+The SSH session may drop halfway: the script moves the router to 192.168.2.254 and changes DHCP. Reconnect on the new address.
+
+The script sets the DNS servers, hardens the management services, generates the certificates, sets the MTU of every Ethernet port, disables the spare ports, configures the management LAN (192.168.2.0/24), and creates your administrator account in place of `admin`.
+
+## 5. Check the base configuration
+
+```bash
+ssh user@192.168.2.254 '/interface ethernet print detail where name~"ether|sfp"'
+ssh user@192.168.2.254 '/ip dns print'
+ssh user@192.168.2.254 '/interface print where disabled'
+```
+
+Expected:
+
+- Every port has `l2mtu=8156` and `mtu=8156`. The VLANs use MTU 8152 and the bridge L2MTU is the lowest of its ports, so one port left at 1600 breaks the jumbo VLANs.
+- `allow-remote-requests=yes` in `/ip dns`. The VLANs use the router as their resolver.
+- The uplink to the managed switch is enabled.
+
+Two lines of `base_configuration.rsc` are known to disagree with the live setup until the script is reworked:
+
+- It ends with `/ip dns set allow-remote-requests=no`, after enabling it at the top. Set it back to `yes` by hand.
+- It disables `ether10`, the intended switch uplink. Enable it by hand if the switch is on that port.
+
+## 6. Bring the router back under OpenTofu
+
+```bash
+cp .env.example .env    # first time only, then set the address and credentials
+chmod 600 .env
+source .env
+tofu init
+tofu plan
+```
+
+A reset router has none of the objects that the state remembers, and RouterOS identifiers (`*A1`) are not stable. Read the plan before applying it:
+
+- Objects that the plan wants to create and that the router already has (an ID that changed): adopt them with `tofu import '<address>' '<id>'`, or drop the stale entry with `tofu state rm '<address>'` and let the plan create it.
+- Objects that no longer exist: the plan recreates them, which is the goal.
+
+`tofu apply` needs an explicit go-ahead from whoever owns the router. It creates the VLANs, addresses, DHCP, DNS, firewall, NAT, the veth and bridge for containers, the HAProxy configuration file and the container.
+
+### Firewall rule order
+
+Rules are inserted with `place_before` positions in the router's rule list, not by name. Today's values only hold on a router that carries the factory defconf rules:
+
+- `place_before = "5"`: just above the defconf input rule `drop all not coming from LAN` (index 5).
+- `place_before = "12"`: just above the defconf forward rule `drop invalid`, which sits at index 10 on a factory router and at 12 once the two DNS input rules are above it.
+
+OpenTofu creates the rules in parallel and by resource key, not in file order, so a full re-apply can leave them in the wrong places. After every apply that creates firewall rules, check the order and move rules by hand if needed:
+
+```bash
+ssh user@192.168.2.254 '/ip firewall filter print'
+```
+
+The accept rules must sit above `drop invalid` and `drop all from WAN not DSTNATed`, and the four custom drops at the end. Making the order declarative with the provider's `routeros_move_items` resource is planned.
+
+## 7. Check the result
+
+1. `tofu plan` shows no changes (apart from known drift).
+2. Every VLAN has neighbors: `/ip arp print where interface=ctrl`, and likewise for `core`, `svc`, `stor`, `ai`, `comp-ew`.
+3. The rules count packets: `/ip firewall filter print stats`.
+4. HAProxy runs: `/container print`. If it does not, check that `usb1` is mounted and that `usb1/haproxy-etc/haproxy.cfg` exists.
+5. From outside, `https://status.phorge.fr` answers.
+
+## Factory rules in the state
+
+The factory (defconf) firewall rules are not declared in `terraform.tfvars`. If an earlier session imported them into the state, a plan proposes to delete them from the router. Remove the state entries instead of applying:
+
+```bash
+tofu state list | grep defconf
+tofu state rm '<address from the list>'
+```
+
+The `special dummy rule to show fasttrack counters` entries are dynamic and are never managed.
