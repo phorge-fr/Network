@@ -1,6 +1,16 @@
+# OpenTofu working data (the provider lock file .terraform.lock.hcl is committed)
 .terraform/
-.terraform.lock.hcl
-terraform.tfstate
-terraform.tfstate.backup
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Secrets and private material
 .env
 .ignore/
+reports/
