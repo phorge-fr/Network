@@ -1,3 +1,18 @@
+# RouterOS file IDs shift when other files or directories change, so the ID kept in the state goes
+# stale and the file would be planned for upload again. Adopt the one that is already on the router.
+data "routeros_files" "uploaded" {
+  for_each = { for f in var.files : f.name => f }
+
+  filter = { name = each.key }
+}
+
+import {
+  for_each = { for name, d in data.routeros_files.uploaded : name => d.files[0].id if length(d.files) > 0 }
+
+  to = routeros_file.files[each.key]
+  id = each.value
+}
+
 resource "routeros_file" "files" {
   for_each = { for f in var.files : f.name => f }
 
