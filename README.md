@@ -26,7 +26,6 @@ firewall.tf          Filter rules, NAT rules, address lists
 routing.tf           BGP connections
 containers.tf        Container runtime, mounts, uploaded files, containers
 encryption.tf        State and plan encryption; the passphrase comes from TF_ENCRYPTION
-moved.tf             Pending state moves (delete once applied)
 terraform.tfvars     Values: networks, DNS records, firewall, NAT, containers
 .terraform.lock.hcl  Pinned provider version and hashes (committed)
 templates/           HAProxy configuration template, rendered with the ingress addresses of networks
