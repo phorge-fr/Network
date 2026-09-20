@@ -32,6 +32,10 @@ resource "routeros_interface_vlan" "vlans" {
   vlan_id   = each.value.vlan_id
   mtu       = lookup(each.value, "mtu", null)
   comment   = lookup(each.value, "comment", null)
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "routeros_ip_address" "ip_addresses" {
@@ -46,6 +50,10 @@ resource "routeros_ip_address" "ip_addresses" {
     routeros_interface_bridge.bridges,
     routeros_interface_vxlan.vxlans
   ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "routeros_ip_pool" "dhcp_pools" {
@@ -308,6 +316,10 @@ resource "routeros_interface_bridge" "bridges" {
   for_each = { for b in var.bridges : b.name => b }
   name     = each.value.name
   comment  = lookup(each.value, "comment", null)
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "routeros_interface_bridge_port" "bridge_ports" {
@@ -316,6 +328,10 @@ resource "routeros_interface_bridge_port" "bridge_ports" {
   interface = each.value.port
 
   depends_on = [routeros_interface_bridge.bridges]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "routeros_file" "files" {
@@ -348,14 +364,13 @@ resource "routeros_container" "containers" {
   interface     = each.value.interface
   hostname      = each.value.hostname
   start_on_boot = lookup(each.value, "start_on_boot", null)
-  # stop_signal   = lookup(each.value, "stop_signal", null)
-  root_dir = lookup(each.value, "root_dir", null)
-  mounts   = lookup(each.value, "mounts", null)
-  logging  = lookup(each.value, "logging", null)
-  running  = lookup(each.value, "running", null)
-  user     = lookup(each.value, "user", null)
-  cmd      = lookup(each.value, "cmd", null)
-  comment  = lookup(each.value, "comment", null)
+  root_dir      = lookup(each.value, "root_dir", null)
+  mounts        = lookup(each.value, "mounts", null)
+  logging       = lookup(each.value, "logging", null)
+  running       = lookup(each.value, "running", null)
+  user          = lookup(each.value, "user", null)
+  cmd           = lookup(each.value, "cmd", null)
+  comment       = lookup(each.value, "comment", null)
 
   depends_on = [
     routeros_container_config.container_config,

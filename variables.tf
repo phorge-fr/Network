@@ -198,7 +198,6 @@ variable "vxlan_interfaces" {
     mtu      = optional(number)
     comment  = optional(string, "tofu;;;")
     disabled = optional(bool)
-    hw       = optional(bool)
   }))
   default = []
 }
@@ -292,15 +291,14 @@ variable "containers" {
     remote_image  = string
     interface     = string
     start_on_boot = optional(bool, true)
-    # stop_signal   = optional(string, "15-SIGTERM")
-    root_dir = optional(string)
-    mounts   = optional(list(string), [])
-    logging  = optional(bool, true)
-    hostname = string
-    running  = optional(bool, true)
-    user     = optional(string)
-    cmd      = optional(string)
-    comment  = optional(string, "tofu;;;")
+    root_dir      = optional(string)
+    mounts        = optional(list(string), [])
+    logging       = optional(bool, true)
+    hostname      = string
+    running       = optional(bool, true)
+    user          = optional(string)
+    cmd           = optional(string)
+    comment       = optional(string, "tofu;;;")
   }))
   default = []
 
