@@ -21,7 +21,11 @@ data "routeros_ip_firewall" "fw" {
 # }
 
 locals {
-  firewall_rules = var.firewall_rules
+  firewall_rules = [
+    for r in var.firewall_rules : merge(r, {
+      dst_address = r.dst_ingress != null ? local.ingress_ips[r.dst_ingress] : r.dst_address
+    })
+  ]
 
   # Rules of one chain that sit above the same factory rule are moved together
   firewall_groups = {

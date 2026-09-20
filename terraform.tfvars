@@ -6,9 +6,9 @@ container_config = {
 }
 
 networks = {
-  ctrl    = { vlan_id = 20, cidr = "10.1.0.0/24", dhcp_pool = "10.1.0.1-10.1.0.253", nodes = ["10.1.0.1-10.1.0.3"] }
-  core    = { vlan_id = 30, cidr = "10.2.0.0/24", dhcp_pool = "10.2.0.1-10.2.0.253", nodes = ["10.2.0.1-10.2.0.3"] }
-  svc     = { vlan_id = 40, cidr = "10.3.0.0/24", dhcp_pool = "10.3.0.1-10.3.0.253", nodes = ["10.3.0.1-10.3.0.3"] }
+  ctrl    = { vlan_id = 20, cidr = "10.1.0.0/24", dhcp_pool = "10.1.0.1-10.1.0.253", nodes = ["10.1.0.1-10.1.0.3"], ingress = 11 }
+  core    = { vlan_id = 30, cidr = "10.2.0.0/24", dhcp_pool = "10.2.0.1-10.2.0.253", nodes = ["10.2.0.1-10.2.0.3"], ingress = 11 }
+  svc     = { vlan_id = 40, cidr = "10.3.0.0/24", dhcp_pool = "10.3.0.1-10.3.0.253", nodes = ["10.3.0.1-10.3.0.3"], ingress = 11 }
   stor    = { vlan_id = 50, cidr = "10.4.0.0/24", dhcp_pool = "10.4.0.1-10.4.0.253", nodes = ["10.4.0.1"] }
   ai      = { vlan_id = 60, cidr = "10.5.0.0/24", dhcp_pool = "10.5.0.1-10.5.0.253", nodes = ["10.5.0.1-10.5.0.2"] }
   comp-ew = { vlan_id = 70, cidr = "10.10.0.0/24", dhcp_pool = "10.10.0.1-10.10.0.253", nodes = ["10.10.0.1-10.10.0.3"], address_list = "comp-nodes" }
@@ -56,8 +56,8 @@ firewall_rules = [
   { id = "dns-tcp-from-non-lan", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", comment = "tofu;;; Allow TCP DNS from !LAN" },
   { id = "dns-udp-from-non-lan", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", comment = "tofu;;; Allow UDP DNS from !LAN" },
 
-  { id = "hproxy-to-core-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", out_interface = "core", dst_address = "10.2.0.11", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to core cluster Ingress" },
-  { id = "hproxy-to-svc-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", out_interface = "svc", dst_address = "10.3.0.11", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to svc cluster Ingress" },
+  { id = "hproxy-to-core-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", out_interface = "core", dst_ingress = "core", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to core cluster Ingress" },
+  { id = "hproxy-to-svc-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", out_interface = "svc", dst_ingress = "svc", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to svc cluster Ingress" },
   { id = "alloy-ctrl-to-core", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "ctrl-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", comment = "tofu;;; Allow ctrl cluster nodes to push metrics/logs to core (Alloy)" },
   { id = "alloy-svc-to-core", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "svc-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", comment = "tofu;;; Allow svc cluster nodes to push metrics/logs to core (Alloy)" },
   { id = "alloy-stor-to-core", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "stor-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", comment = "tofu;;; Allow stor nodes to push metrics/logs to core (Alloy)" },
@@ -104,7 +104,7 @@ bridges = [{
 }]
 
 files = [{
-  name = "usb1/haproxy-etc/haproxy.cfg", contents = "templates/haproxy.cfg"
+  name = "usb1/haproxy-etc/haproxy.cfg", template = "templates/haproxy.cfg.tftpl"
 }]
 
 container_mounts = [{

@@ -21,7 +21,7 @@ variable "insecure_tls" {
 }
 
 variable "networks" {
-  description = "Workload VLANs, keyed by name. The name is the interface name and the router takes the last usable address of the subnet. DHCP, the phorge interface list and the <name>-nodes address list derive from it."
+  description = "Workload VLANs, keyed by name. The name is the interface name and the router takes the last usable address of the subnet. DHCP, the phorge interface list and the <name>-nodes address list derive from it. ingress is the host number of the public ingress (traefik-public) of a cluster network."
   type = map(object({
     vlan_id      = number
     cidr         = string
@@ -29,6 +29,7 @@ variable "networks" {
     dhcp_pool    = optional(string)
     nodes        = optional(list(string), [])
     address_list = optional(string)
+    ingress      = optional(number)
   }))
 
   validation {
@@ -54,6 +55,11 @@ variable "networks" {
   validation {
     condition     = alltrue([for name in keys(var.networks) : length(name) <= 15])
     error_message = "Network names become interface names, which RouterOS limits to 15 characters."
+  }
+
+  validation {
+    condition     = alltrue([for n in values(var.networks) : n.ingress == null ? true : (n.ingress >= 1 && n.ingress <= 253)])
+    error_message = "ingress must be a host number between 1 and 253."
   }
 }
 
@@ -96,12 +102,13 @@ variable "dns_records" {
 }
 
 variable "firewall_rules" {
-  description = "Firewall filter rules, placed on the router in list order. id is the stable key. before is the comment of the factory rule of the same chain that the rule must sit above; without it the rule goes to the end of the chain."
+  description = "Firewall filter rules, placed on the router in list order. id is the stable key. before is the comment of the factory rule of the same chain that the rule must sit above; without it the rule goes to the end of the chain. dst_ingress is a network name whose public ingress address becomes the dst_address."
   type = list(object({
-    id     = string
-    action = string
-    chain  = string
-    before = optional(string)
+    id          = string
+    action      = string
+    chain       = string
+    before      = optional(string)
+    dst_ingress = optional(string)
 
     address_list              = optional(string)
     address_list_timeout      = optional(string)
@@ -183,6 +190,11 @@ variable "firewall_rules" {
   validation {
     condition     = length(distinct([for r in var.firewall_rules : r.id])) == length(var.firewall_rules)
     error_message = "Every firewall rule needs its own id."
+  }
+
+  validation {
+    condition     = alltrue([for r in var.firewall_rules : r.dst_ingress == null || r.dst_address == null])
+    error_message = "A rule takes either dst_address or dst_ingress, not both."
   }
 }
 
@@ -304,7 +316,7 @@ variable "files" {
   description = "List of files to upload to the RouterOS device"
   type = list(object({
     name     = string
-    contents = string
+    template = string
   }))
 }
 

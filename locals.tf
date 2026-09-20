@@ -51,4 +51,21 @@ locals {
     { for k, v in routeros_interface_veth.veths : k => v.name },
     { for k, v in routeros_interface_vxlan.vxlans : k => v.name },
   )
+
+  # Public ingress address of each cluster network, from its host number
+  ingress_ips = { for name, n in local.networks : name => cidrhost(n.cidr, n.ingress) if n.ingress != null }
+
+  # Node addresses of each network, with the ranges of nodes expanded (ranges stay inside one /24)
+  node_ips = {
+    for name, n in local.networks : name => flatten([
+      for r in n.nodes : strcontains(r, "-") ? [
+        for h in range(tonumber(split(".", split("-", r)[0])[3]), tonumber(split(".", split("-", r)[1])[3]) + 1) : cidrhost(n.cidr, h)
+      ] : [cidrhost(n.cidr, tonumber(split(".", r)[3]))]
+    ])
+  }
+
+  template_vars = {
+    ingress     = local.ingress_ips
+    incus_nodes = local.node_ips["comp-ew"]
+  }
 }

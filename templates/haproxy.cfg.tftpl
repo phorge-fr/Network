@@ -24,35 +24,35 @@ backend http-301
 
 backend http-control-ingress
     mode http
-    server ingress-server 10.1.0.11:80
+    server ingress-server ${ingress["ctrl"]}:80
 
 backend https-control-ingress
     mode tcp
-    server ingress-server 10.1.0.11:443 send-proxy-v2
+    server ingress-server ${ingress["ctrl"]}:443 send-proxy-v2
 
 backend http-core-ingress
     mode http
-    server ingress-server 10.2.0.11:80
+    server ingress-server ${ingress["core"]}:80
 
 backend https-core-ingress
     mode tcp
-    server ingress-server 10.2.0.11:443 send-proxy-v2
+    server ingress-server ${ingress["core"]}:443 send-proxy-v2
 
 backend http-svc-ingress
     mode http
-    server ingress-server 10.3.0.11:80
+    server ingress-server ${ingress["svc"]}:80
 
 backend https-svc-ingress
     mode tcp
-    server ingress-server 10.3.0.11:443 send-proxy-v2
+    server ingress-server ${ingress["svc"]}:443 send-proxy-v2
 
 backend incus-cluster
     mode tcp
     balance source
     option tcp-check
-    server comp-opti-01 10.10.0.1:8443 check
-    server comp-opti-02 10.10.0.2:8443 check
-    server comp-opti-03 10.10.0.3:8443 check
+%{ for ip in incus_nodes ~}
+    server comp-opti-${format("%02d", tonumber(split(".", ip)[3]))} ${ip}:8443 check
+%{ endfor ~}
 
 frontend http-dispatcher
     bind :8080

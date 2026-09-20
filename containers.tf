@@ -17,7 +17,7 @@ resource "routeros_file" "files" {
   for_each = { for f in var.files : f.name => f }
 
   name     = each.value.name
-  contents = file(each.value.contents)
+  contents = templatefile(each.value.template, local.template_vars)
 }
 
 resource "routeros_container_mounts" "container_mounts" {
