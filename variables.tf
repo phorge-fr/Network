@@ -14,6 +14,12 @@ variable "password" {
   sensitive   = true
 }
 
+variable "insecure_tls" {
+  description = "Skip the verification of the router certificate. Only for the first run after a router reset, before certs/router-ca.pem has been refreshed."
+  type        = bool
+  default     = false
+}
+
 variable "networks" {
   description = "Workload VLANs, keyed by name. The name is the interface name and the router takes the last usable address of the subnet. DHCP, the phorge interface list and the <name>-nodes address list derive from it."
   type = map(object({

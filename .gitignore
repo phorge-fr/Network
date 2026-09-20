@@ -14,3 +14,6 @@ override.tf.json
 .env
 .ignore/
 reports/
+
+# Local trust anchor of the router certificate authority (fetched from the router, see the runbook)
+certs/
