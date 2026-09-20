@@ -11,7 +11,7 @@ Use it when the router has to be rebuilt from scratch: factory reset, replacemen
    scp user@192.168.2.254:/pre-reset.rsc ./
    ```
 
-2. Copy the OpenTofu state: `cp terraform.tfstate terraform.tfstate.pre-reset`.
+2. Copy the OpenTofu state: `cp terraform.tfstate terraform.tfstate.pre-reset`. It is encrypted, so keep the passphrase of `.env` (`TF_ENCRYPTION`) with it.
 3. Have physical access: after the reset, MAC-server and neighbor discovery are disabled, so a lockout can only be fixed over IP on the management LAN, on the serial console, or with the reset button.
 4. Note that every service published through HAProxy is offline until the container and its configuration file are back.
 
@@ -72,8 +72,19 @@ Two lines of `base_configuration.rsc` are known to disagree with the live setup 
 
 ## 6. Bring the router back under OpenTofu
 
+The provider checks the router certificate against `certs/router-ca.pem`. That file is a local trust anchor and is not committed. A reset creates a new CA, so fetch it again: export the root certificate on the router, copy it, and remove the export.
+
 ```bash
-cp .env.example .env    # first time only, then set the address and credentials
+mkdir -p certs
+ssh user@192.168.2.254 '/certificate export-certificate root-cert'
+scp user@192.168.2.254:/cert_export_root-cert.crt certs/router-ca.pem
+ssh user@192.168.2.254 '/file remove cert_export_root-cert.crt'
+```
+
+To check the copy, compare `openssl x509 -in certs/router-ca.pem -noout -fingerprint -sha256` with the fingerprint that `/certificate print detail where name=root-cert` shows. Until the file exists, the first run can skip the check with `TF_VAR_insecure_tls=true`.
+
+```bash
+cp .env.example .env    # first time only, then set the address, credentials and state passphrase
 chmod 600 .env
 source .env
 tofu init
@@ -82,7 +93,7 @@ tofu plan
 
 A reset router has none of the objects that the state remembers, and RouterOS identifiers (`*A1`) are not stable. Read the plan before applying it:
 
-- Objects that the plan wants to create and that the router already has (an ID that changed): adopt them with `tofu import '<address>' '<id>'`, or drop the stale entry with `tofu state rm '<address>'` and let the plan create it.
+- Objects that the plan wants to create and that the router already has (an ID that changed): adopt them with `tofu import '<address>' '<id>'`, or drop the stale entry with `tofu state rm '<address>'` and let the plan create it. The uploaded `haproxy.cfg` is the exception: an `import` block in `containers.tf` adopts it whenever it already exists on the router.
 - Objects that no longer exist: the plan recreates them, which is the goal.
 
 `tofu apply` needs an explicit go-ahead from whoever owns the router. It creates the VLANs, addresses, DHCP, DNS, firewall, NAT, the veth and bridge for containers, the HAProxy configuration file and the container.
