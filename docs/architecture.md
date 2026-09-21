@@ -76,13 +76,14 @@ Address conventions inside each cluster VLAN:
 | `.10` to `.20` | Cilium L2 load balancer pool |
 | `.254` | Router |
 
-Address lists used by the firewall: `ctrl-nodes` 10.1.0.1-3, `core-nodes` 10.2.0.1-3, `svc-nodes` 10.3.0.1-3, `stor-nodes` 10.4.0.1, `ai-nodes` 10.5.0.1-2, `comp-nodes` 10.10.0.1-3.
+Address lists used by the firewall: `ctrl-nodes` 10.1.0.1-3, `core-nodes` 10.2.0.1-3, `svc-nodes` 10.3.0.1-3, `stor-nodes` 10.4.0.1, `ai-nodes` 10.5.0.1-2, `comp-nodes` 10.10.0.1-3, and `container-ips` (the addresses of the veths, 172.17.0.2 today, derived from `veths`).
 
 Firewall model:
 
-1. **input**: only the `LAN` interface list reaches the router itself. Every other interface gets DNS (TCP and UDP 53) and ICMP.
-2. **forward**: accepted by default. Explicit drops, in order: invalid connections, new connections from `WAN` that were not dst-NATed, anything not from `LAN` towards 192.168.2.0/24 or 192.168.1.0/24, `Containers` to `phorge`, `phorge` to `phorge`. Allowed exceptions from `terraform.tfvars` are inserted above the drops.
-3. **Result**: VLAN to VLAN is denied unless listed, the management LAN reaches everything, VLANs reach the Internet, and the Internet only reaches TCP 80 and 443 through the dst-NAT rules.
+1. **input**: only the `LAN` interface list reaches the router itself. The `phorge` VLAN interfaces also get DNS (TCP and UDP 53), and ICMP is accepted from everywhere. Containers and the WAN side get nothing else.
+2. **forward**: accepted by default. Explicit drops, in order: invalid connections, new connections from `WAN` that were not dst-NATed, anything not from `LAN` towards 192.168.2.0/24 or 192.168.1.0/24, `Containers` to `phorge` (silent), everything else from `Containers` (logged as `ctr-drop`), `phorge` to `phorge`. Allowed exceptions from `terraform.tfvars` are inserted above the drops.
+3. **Containers are treated as compromisable.** `containers-anti-spoof` sits above every accept and drops (logged as `ctr-spoof`) any packet that leaves the `containers` bridge with a source outside `container-ips`; the address-based accepts below it do not match an interface, so without it a container could borrow a node's address. What a container may then reach is exactly the two accepts to the core and svc ingresses on TCP 80 and 443, and each of them is also bound to `container-ips`. The masquerade rule stays: Traefik trusts PROXY headers only from the router address of its VLAN.
+4. **Result**: VLAN to VLAN is denied unless listed, the management LAN reaches everything, VLANs reach the Internet, containers reach only the two ingresses, and the Internet only reaches TCP 80 and 443 through the dst-NAT rules.
 
 ## Physical wiring
 

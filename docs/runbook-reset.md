@@ -114,6 +114,7 @@ The accept rules must sit above `drop invalid` and `drop all from WAN not DSTNAT
 3. The rules count packets: `/ip firewall filter print stats`.
 4. HAProxy runs: `/container print`. If it does not, check that `usb1` is mounted and that `usb1/haproxy-etc/haproxy.cfg` exists.
 5. From outside, `https://status.phorge.fr` answers.
+6. The container rules stay quiet: `/ip firewall filter print stats where log-prefix~"ctr-"` shows 0 packets for `ctr-spoof` and `ctr-drop`. A hit means a container tried something the firewall does not allow, and `/log print where message~"ctr-"` shows what.
 
 ## HAProxy configuration reload
 
