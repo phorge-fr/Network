@@ -351,6 +351,7 @@ variable "containers" {
     hostname      = string
     running       = optional(bool, true)
     user          = optional(string)
+    entrypoint    = optional(string)
     cmd           = optional(string)
     comment       = optional(string, "tofu;;;")
   }))

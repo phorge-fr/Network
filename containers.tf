@@ -47,6 +47,7 @@ resource "routeros_container" "containers" {
   logging       = each.value.logging
   running       = each.value.running
   user          = each.value.user
+  entrypoint    = each.value.entrypoint
   cmd           = each.value.cmd
   comment       = each.value.comment
 
