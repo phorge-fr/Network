@@ -134,7 +134,7 @@ The storage node exports `/mnt/main/csi-svc` over NFSv4 to the three svc nodes a
 
 Forgejo also serves Git over SSH on 10.3.0.13:22, internal only.
 
-HAProxy ([templates/haproxy.cfg.tftpl](../templates/haproxy.cfg.tftpl)) routes plain HTTP on 8080 (redirect to HTTPS for the five known hosts, everything else to the control ingress) and TLS on 8443 by SNI without terminating it: `iaas` to the Incus nodes, `auth`, `monitoring` and `status` to the core ingress, `git` to the svc ingress, anything else to the control ingress. The ingress addresses and the Incus node addresses are not typed in the template: they come from `networks` (`ingress` and `nodes`), and the rules that let the container reach the ingresses use the same data.
+HAProxy ([templates/haproxy.cfg.tftpl](../templates/haproxy.cfg.tftpl)) routes plain HTTP on 8080 (redirect to HTTPS for the five known hosts, everything else to the control ingress) and TLS on 8443 by SNI without terminating it: `iaas` to the Incus nodes, `auth`, `monitoring` and `status` to the core ingress, `git` to the svc ingress, anything else to the control ingress. A change to the file is picked up by the running container without a restart. The ingress addresses and the Incus node addresses are not typed in the template: they come from `networks` (`ingress` and `nodes`), and the rules that let the container reach the ingresses use the same data.
 
 Client addresses reach the ingresses through the PROXY protocol v2. HAProxy traffic is masqueraded by the router (NAT rule for 172.17.0.0/24), so each Traefik trusts PROXY headers only from the router address of its VLAN (`x.0.254/32`, set in `overlays/*/controllers/traefik/traefik-public-patch.yml`). Changing that NAT rule, the HAProxy source or the Traefik `trustedIPs` breaks client address preservation.
 
@@ -250,5 +250,5 @@ Things that disagree between files or between a file and the live router. None i
 
 1. DNS record at Cloudflare.
 2. FrontPlane: an Ingress with class `traefik-public` and `cert-manager.io/cluster-issuer: public-issuer`.
-3. `templates/haproxy.cfg.tftpl`: the host in the HTTP redirect ACLs and a `use_backend` line on the SNI frontend.
+3. `templates/haproxy.cfg.tftpl`: the host in the HTTP redirect ACLs and a `use_backend` line on the SNI frontend. After `tofu apply` the container reloads by itself.
 4. A router rule from `containers` to that cluster's ingress, if it is a new cluster.

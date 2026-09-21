@@ -28,7 +28,7 @@ containers.tf        Container runtime, mounts, uploaded files, containers
 encryption.tf        State and plan encryption; the passphrase comes from TF_ENCRYPTION
 terraform.tfvars     Values: networks, DNS records, firewall, NAT, containers
 .terraform.lock.hcl  Pinned provider version and hashes (committed)
-templates/           HAProxy configuration template, rendered with the ingress addresses of networks
+templates/           HAProxy configuration template and the script that reloads it
 certs/               Local trust anchor: the router CA (ignored by git, see the runbook)
 defaults/            RouterOS scripts: factory defaults, base configuration, Phorge.dpk
 docs/                Architecture and runbooks
@@ -70,6 +70,8 @@ One entry in `networks` (name, VLAN ID, CIDR, optionally a DHCP pool, node range
    ```
 
 Run every command from the repository root so that `terraform.tfvars` is loaded. Without it the plan stops on missing required variables.
+
+The HAProxy configuration is `templates/haproxy.cfg.tftpl`. Edit it and run `tofu apply`: the container reloads it by itself within about 10 seconds, without dropping connections (see [the runbook](docs/runbook-reset.md#haproxy-configuration-reload), including how to check that HAProxy accepted it). Do not edit the file on the router, the next apply would overwrite it.
 
 The uploaded HAProxy configuration is adopted automatically (`import` block in `containers.tf`) because RouterOS file IDs shift when other files change.
 

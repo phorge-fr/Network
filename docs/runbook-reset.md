@@ -115,6 +115,26 @@ The accept rules must sit above `drop invalid` and `drop all from WAN not DSTNAT
 4. HAProxy runs: `/container print`. If it does not, check that `usb1` is mounted and that `usb1/haproxy-etc/haproxy.cfg` exists.
 5. From outside, `https://status.phorge.fr` answers.
 
+## HAProxy configuration reload
+
+The container runs `templates/haproxy-run.sh`, uploaded to `usb1/haproxy-etc/run.sh`. It starts HAProxy in master-worker mode and compares the checksum of `haproxy.cfg` every 5 seconds. When the file changes, it validates it with `haproxy -c` and, if it is valid, asks HAProxy to reload gracefully: existing connections finish on the old process, new ones use the new configuration, and the container does not restart. An invalid file is refused and the running configuration stays. Measured on the router, a change is live 3 to 9 seconds after `tofu apply`.
+
+To add a public hostname, add its two lines (the redirect in `http-dispatcher` and the `use_backend` in `sni-dispatcher`) to `templates/haproxy.cfg.tftpl` and run `tofu apply`. The file in the repository is the source of truth: do not edit it on the router, because the next apply overwrites it and the container reloads the old version. `tofu apply` succeeds even when HAProxy refuses the file, because it only uploads it, so check that the router took the change into account:
+
+```bash
+ssh user@192.168.2.254 '/log print where message~"haproxy"'
+```
+
+`haproxy.cfg changed: reloading` followed by `Loading success` means it is live. `haproxy.cfg changed but is invalid` means the running configuration did not change, and the next lines give the reason.
+
+The check only catches configurations that HAProxy cannot parse. A valid configuration that is wrong, such as a mistyped address or a removed route, is loaded as it is: fix the template and apply again.
+
+If the container restarts while the file is invalid, for example after a reboot of the router, the script restores the last configuration that passed the check (`haproxy.cfg.good`, in the same directory) and logs it. The next `tofu plan` then shows the file as changed, because OpenTofu still holds the invalid version.
+
+The old HAProxy process stays until its connections end (`timeout tunnel` is 6 hours), so several reloads in a row leave several processes running for a while. A change to `run.sh` itself only takes effect at the next container restart.
+
+The first apply that introduces the script restarts the container once, because its entrypoint changes: about 6 seconds without service. The same happens whenever an attribute of the container itself changes (image, user, entrypoint, mounts).
+
 ## Factory rules in the state
 
 The factory (defconf) firewall rules are not declared in `terraform.tfvars`. If an earlier session imported them into the state, a plan proposes to delete them from the router. Remove the state entries instead of applying:
