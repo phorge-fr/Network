@@ -53,8 +53,8 @@ dns_records = [
 # Rules are placed on the router in this order. `before` puts a rule right above the factory rule of
 # that name in the same chain; without it the rule goes to the end of the chain.
 firewall_rules = [
-  { id = "dns-tcp-from-non-lan", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "!LAN", dst_port = "53", protocol = "tcp", comment = "tofu;;; Allow TCP DNS from !LAN" },
-  { id = "dns-udp-from-non-lan", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "!LAN", dst_port = "53", protocol = "udp", comment = "tofu;;; Allow UDP DNS from !LAN" },
+  { id = "dns-tcp-from-phorge", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "phorge", dst_port = "53", protocol = "tcp", comment = "tofu;;; Allow TCP DNS from phorge" },
+  { id = "dns-udp-from-phorge", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "phorge", dst_port = "53", protocol = "udp", comment = "tofu;;; Allow UDP DNS from phorge" },
 
   { id = "hproxy-to-core-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", out_interface = "core", dst_ingress = "core", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to core cluster Ingress" },
   { id = "hproxy-to-svc-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", out_interface = "svc", dst_ingress = "svc", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to svc cluster Ingress" },
