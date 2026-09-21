@@ -112,6 +112,9 @@ resource "routeros_ip_firewall_filter" "firewall_rules" {
   tls_host                  = each.value.tls_host
   ttl                       = each.value.ttl
 
+  # Rules name address lists by string: wait for the entries, or a negated list is empty and matches everything
+  depends_on = [routeros_ip_firewall_addr_list.address_lists]
+
   # Rules created before ids and routeros_move_items carry a place_before, which forces a new rule
   lifecycle {
     ignore_changes = [place_before]

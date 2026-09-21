@@ -24,12 +24,16 @@ locals {
     { for ip in var.ip_addresses : "${ip.interface}-${ip.address}" => ip },
   )
 
+  # Addresses given to the containers by their veth: the only sources allowed to leave the containers bridge
+  container_addresses = flatten([for v in var.veths : [for a in v.address : split("/", a)[0]]])
+
   address_list_entries = merge(
     {
       for e in flatten([
         for name, n in local.networks : [for node in n.nodes : { list = n.list_name, address = node }]
       ]) : "${e.list}-${e.address}" => merge(e, { comment = local.comment })
     },
+    { for a in local.container_addresses : "container-ips-${a}" => { list = "container-ips", address = a, comment = local.comment } },
     { for e in var.firewall_address_lists : "${e.list}-${e.address}" => e },
   )
 

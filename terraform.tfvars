@@ -56,8 +56,10 @@ firewall_rules = [
   { id = "dns-tcp-from-phorge", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "phorge", dst_port = "53", protocol = "tcp", comment = "tofu;;; Allow TCP DNS from phorge" },
   { id = "dns-udp-from-phorge", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "phorge", dst_port = "53", protocol = "udp", comment = "tofu;;; Allow UDP DNS from phorge" },
 
-  { id = "hproxy-to-core-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", out_interface = "core", dst_ingress = "core", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to core cluster Ingress" },
-  { id = "hproxy-to-svc-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", out_interface = "svc", dst_ingress = "svc", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to svc cluster Ingress" },
+  # A container may only use the address of its veth: this rule stays first, above every accept that matches by address
+  { id = "containers-anti-spoof", chain = "forward", action = "drop", before = "defconf: drop invalid", in_interface = "containers", src_address_list = "!container-ips", log = true, log_prefix = "ctr-spoof", comment = "tofu;;; Drop packets from containers with a source that is not a container address" },
+  { id = "hproxy-to-core-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", src_address_list = "container-ips", out_interface = "core", dst_ingress = "core", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to core cluster Ingress" },
+  { id = "hproxy-to-svc-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", src_address_list = "container-ips", out_interface = "svc", dst_ingress = "svc", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to svc cluster Ingress" },
   { id = "alloy-ctrl-to-core", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "ctrl-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", comment = "tofu;;; Allow ctrl cluster nodes to push metrics/logs to core (Alloy)" },
   { id = "alloy-svc-to-core", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "svc-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", comment = "tofu;;; Allow svc cluster nodes to push metrics/logs to core (Alloy)" },
   { id = "alloy-stor-to-core", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "stor-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", comment = "tofu;;; Allow stor nodes to push metrics/logs to core (Alloy)" },
@@ -68,6 +70,8 @@ firewall_rules = [
   { id = "drop-this-network", chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.2.0/24", comment = "tofu;;; Drop 'this' network" },
   { id = "drop-overlay-network", chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", comment = "tofu;;; Drop overlay network" },
   { id = "drop-containers-to-phorge", chain = "forward", action = "drop", in_interface_list = "Containers", out_interface_list = "phorge", comment = "tofu;;; Drop Containers to phorge" },
+  # HAProxy keeps trying the control ingress and the Incus backends that are blocked above, so that drop stays silent; a hit here is unexpected
+  { id = "drop-containers", chain = "forward", action = "drop", in_interface_list = "Containers", log = true, log_prefix = "ctr-drop", comment = "tofu;;; Drop everything else from Containers" },
   { id = "drop-phorge-to-phorge", chain = "forward", action = "drop", in_interface_list = "phorge", out_interface_list = "phorge", comment = "tofu;;; Drop phorge to phorge" },
 ]
 
