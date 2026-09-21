@@ -116,6 +116,9 @@ container_mounts = [{
   name = "haproxy_etc", src = "/usb1/haproxy-etc", dst = "/usr/local/etc/haproxy"
 }]
 
+# The image is pinned by digest (haproxy 3.4.4): a new version is a deliberate change here, and it recreates the container.
+# The container user stays 0:0 on purpose: RouterOS creates every directory without the execute bit, so uid 99 could not
+# read the mounted configuration. run.sh reads it as root and starts HAProxy as uid 99 without any capability.
 containers = [{
-  hostname = "haproxy", remote_image = "arm32v7/haproxy:latest", mounts = ["haproxy_etc"], logging = true, root_dir = "usb1/images/haproxy", interface = "veth1", start_on_boot = true, user = "0:0", entrypoint = "/bin/sh", cmd = "/usr/local/etc/haproxy/run.sh"
+  hostname = "haproxy", remote_image = "arm32v7/haproxy@sha256:d75b9013d6c249ef973e280e68074b8c390cd02c02f124e893e0ce0c6c323745", mounts = ["haproxy_etc"], logging = true, root_dir = "usb1/images/haproxy", interface = "veth1", start_on_boot = true, user = "0:0", entrypoint = "/bin/sh", cmd = "/usr/local/etc/haproxy/run.sh"
 }]
