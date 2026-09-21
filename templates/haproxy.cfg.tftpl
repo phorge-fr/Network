@@ -6,7 +6,7 @@ global
     stats timeout 30s
     ssl-default-bind-options ssl-min-ver TLSv1.2
     tune.ssl.default-dh-param 2048
-    maxconn 100000
+    maxconn 4096
 
 defaults
     mode tcp
@@ -16,7 +16,7 @@ defaults
     timeout server 120s
     timeout tunnel 6h
     timeout http-request 5s
-    maxconn 80000
+    maxconn 4096
 
 backend http-301
     mode http
