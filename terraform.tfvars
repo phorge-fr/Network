@@ -103,14 +103,15 @@ bridges = [{
   name = "containers", ports = ["veth1"], comment = "tofu;;;  Containers Bridge"
 }]
 
-files = [{
-  name = "usb1/haproxy-etc/haproxy.cfg", template = "templates/haproxy.cfg.tftpl"
-}]
+files = [
+  { name = "usb1/haproxy-etc/haproxy.cfg", template = "templates/haproxy.cfg.tftpl" },
+  { name = "usb1/haproxy-etc/run.sh", template = "templates/haproxy-run.sh" },
+]
 
 container_mounts = [{
   name = "haproxy_etc", src = "/usb1/haproxy-etc", dst = "/usr/local/etc/haproxy"
 }]
 
 containers = [{
-  hostname = "haproxy", remote_image = "arm32v7/haproxy:latest", mounts = ["haproxy_etc"], logging = true, root_dir = "usb1/images/haproxy", interface = "veth1", start_on_boot = true, user = "0:0"
+  hostname = "haproxy", remote_image = "arm32v7/haproxy:latest", mounts = ["haproxy_etc"], logging = true, root_dir = "usb1/images/haproxy", interface = "veth1", start_on_boot = true, user = "0:0", entrypoint = "/bin/sh", cmd = "/usr/local/etc/haproxy/run.sh"
 }]
