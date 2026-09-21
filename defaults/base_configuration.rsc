@@ -19,8 +19,6 @@
 
 /tool bandwidth-server set enabled=no
 
-/ip dns set allow-remote-requests=no
-
 /ip proxy set enabled=no
 /ip socks set enabled=no
 /ip upnp set enabled=no

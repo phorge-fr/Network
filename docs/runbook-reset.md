@@ -65,10 +65,7 @@ Expected:
 - `allow-remote-requests=yes` in `/ip dns`. The VLANs use the router as their resolver.
 - The uplink to the managed switch is enabled.
 
-Two lines of `base_configuration.rsc` are known to disagree with the live setup until the script is reworked:
-
-- It ends with `/ip dns set allow-remote-requests=no`, after enabling it at the top. Set it back to `yes` by hand.
-- It disables `ether10`, the intended switch uplink. Enable it by hand if the switch is on that port.
+One line of `base_configuration.rsc` is known to disagree with the live setup until the script is reworked: it disables `ether10`, the intended switch uplink. Enable it by hand if the switch is on that port.
 
 ## 6. Bring the router back under OpenTofu
 

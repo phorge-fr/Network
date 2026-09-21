@@ -227,7 +227,7 @@ Things that disagree between files or between a file and the live router. None i
 5. The GPU host is `ai-z440-01` in the inventory, holds a DHCP lease (10.5.0.4) under the hostname `hpc1`, has no DNS record, and is outside `ai-nodes` (10.5.0.1-2). The HPC monitoring config scrapes `hpc0.phorge`.
 6. The FrontPlane README bootstraps Flux from a repository called `Hangar`.
 7. The three clusters share the pod and service CIDRs (10.244.0.0/16, 10.96.0.0/12), which rules out a future cluster mesh or direct pod routing between them.
-8. `base_configuration.rsc` sets `allow-remote-requests` to `yes` and then to `no` (the live router has `yes`, and the VLANs need it), and disables `ether10`, the intended switch uplink.
+8. `base_configuration.rsc` disables `ether10`, the intended switch uplink.
 
 ## Change checklists
 
