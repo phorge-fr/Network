@@ -60,9 +60,11 @@ firewall_rules = [
   { id = "containers-anti-spoof", chain = "forward", action = "drop", before = "defconf: drop invalid", in_interface = "containers", src_address_list = "!container-ips", log = true, log_prefix = "ctr-spoof", comment = "tofu;;; Drop packets from containers with a source that is not a container address" },
   { id = "hproxy-to-core-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", src_address_list = "container-ips", out_interface = "core", dst_ingress = "core", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to core cluster Ingress" },
   { id = "hproxy-to-svc-ingress", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", src_address_list = "container-ips", out_interface = "svc", dst_ingress = "svc", dst_port = "80,443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to svc cluster Ingress" },
+  { id = "hproxy-to-incus-cluster", chain = "forward", action = "accept", before = "defconf: drop invalid", in_interface = "containers", src_address_list = "container-ips", out_interface = "comp-ew", dst_address_list = "comp-nodes", dst_port = "8443", protocol = "tcp", comment = "tofu;;; Allow Hproxy to Incus cluster API (iaas.phorge.fr)" },
   { id = "alloy-ctrl-to-core", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "ctrl-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", comment = "tofu;;; Allow ctrl cluster nodes to push metrics/logs to core (Alloy)" },
   { id = "alloy-svc-to-core", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "svc-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", comment = "tofu;;; Allow svc cluster nodes to push metrics/logs to core (Alloy)" },
   { id = "alloy-stor-to-core", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "stor-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", comment = "tofu;;; Allow stor nodes to push metrics/logs to core (Alloy)" },
+  { id = "incus-comp-to-core", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "comp-nodes", dst_address = "10.2.0.10", dst_port = "443", protocol = "tcp", comment = "tofu;;; Allow comp nodes to reach core services (Incus logs to Loki, OpenFGA authorization)" },
   { id = "nfs-tcp-svc-to-stor", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "svc-nodes", dst_address_list = "stor-nodes", dst_port = "2049", protocol = "tcp", comment = "tofu;;; Allow svc cluster nodes to stor nodes over NFS/TCP" },
   { id = "nfs-udp-svc-to-stor", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "svc-nodes", dst_address_list = "stor-nodes", dst_port = "2049", protocol = "udp", comment = "tofu;;; Allow svc cluster nodes to stor nodes over NFS/UDP" },
   { id = "s3-core-to-stor", chain = "forward", action = "accept", before = "defconf: drop invalid", src_address_list = "core-nodes", dst_address_list = "stor-nodes", dst_port = "9000", protocol = "tcp", comment = "tofu;;; Allow core cluster nodes to stor rustfs S3 (Longhorn backups)" },
@@ -70,7 +72,7 @@ firewall_rules = [
   { id = "drop-this-network", chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.2.0/24", comment = "tofu;;; Drop 'this' network" },
   { id = "drop-overlay-network", chain = "forward", action = "drop", in_interface_list = "!LAN", dst_address = "192.168.1.0/24", comment = "tofu;;; Drop overlay network" },
   { id = "drop-containers-to-phorge", chain = "forward", action = "drop", in_interface_list = "Containers", out_interface_list = "phorge", comment = "tofu;;; Drop Containers to phorge" },
-  # HAProxy keeps trying the control ingress and the Incus backends that are blocked above, so that drop stays silent; a hit here is unexpected
+  # HAProxy keeps trying the control ingress, which is blocked above, so that drop stays silent; a hit here is unexpected
   { id = "drop-containers", chain = "forward", action = "drop", in_interface_list = "Containers", log = true, log_prefix = "ctr-drop", comment = "tofu;;; Drop everything else from Containers" },
   { id = "drop-phorge-to-phorge", chain = "forward", action = "drop", in_interface_list = "phorge", out_interface_list = "phorge", comment = "tofu;;; Drop phorge to phorge" },
 ]
@@ -90,14 +92,14 @@ vxlan_interfaces = [
 vxlan_vteps = [
 ]
 
-# bgp_connections = [
-#   { as = 65535, comment = "tofu;;; IaaS clever-lynx", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "clever-lynx", remote = { address = "10.1.0.1" , as = 65535 } },
-#   { as = 65535, comment = "tofu;;; IaaS gentle-fox", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "gentle-fox", remote = { address = "10.1.0.2" , as = 65535 } },
-#   { as = 65535, comment = "tofu;;; IaaS mighty-deer", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "mighty-deer", remote = { address = "10.1.0.3" , as = 65535 } },
+bgp_connections = [
+  { as = 65535, comment = "tofu;;; comp-opti-01", connect = true, listen = true, local = { address = "10.10.0.254", role = "ibgp" }, name = "comp-opti-01", remote = { address = "10.10.0.1" , as = 65535 } },
+  { as = 65535, comment = "tofu;;; comp-opti-02", connect = true, listen = true, local = { address = "10.10.0.254", role = "ibgp" }, name = "comp-opti-02", remote = { address = "10.10.0.2" , as = 65535 } },
+  { as = 65535, comment = "tofu;;; comp-opti-03", connect = true, listen = true, local = { address = "10.10.0.254", role = "ibgp" }, name = "comp-opti-03", remote = { address = "10.10.0.3" , as = 65535 } },
 #   { as = 65535, comment = "tofu;;; IaaS brave-whale", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "brave-whale", remote = { address = "10.1.0.4" , as = 65535 } },
 #   { as = 65535, comment = "tofu;;; IaaS mighty-rabbit", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "mighty-rabbit", remote = { address = "10.1.0.5" , as = 65535 } },
 #   { as = 65535, comment = "tofu;;; IaaS clever-panda", connect = true, listen = true, local = { address = "10.1.0.254", role = "ibgp" }, name = "clever-panda", remote = { address = "10.1.0.6" , as = 65535 } }
-# ]
+]
 
 veths = [{
   name = "veth1", address = ["172.17.0.2/24"], gateway = "172.17.0.1", comment = "tofu;;; Containers Veth"
