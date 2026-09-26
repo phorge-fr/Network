@@ -27,7 +27,7 @@
 
 /lcd pin set pin-number=<1234> hide-pin-number=yes
 
-/ip service disable api,api-ssl,ftp,telnet
+/ip service disable api,ftp,telnet
 
 # --- SSL/TLS---
 

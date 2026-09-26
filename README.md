@@ -24,6 +24,7 @@ dhcp.tf              DHCP networks and servers
 dns.tf               DNS records
 firewall.tf          Filter rules, NAT rules, address lists
 routing.tf           BGP connections
+users.tf             RouterOS user groups and users (passwords from .env, never from the tfvars)
 containers.tf        Container runtime, mounts, uploaded files, containers
 encryption.tf        State and plan encryption; the passphrase comes from TF_ENCRYPTION
 terraform.tfvars     Values: networks, DNS records, firewall, NAT, containers
@@ -52,6 +53,8 @@ One entry in `networks` (name, VLAN ID, CIDR, optionally a DHCP pool, node range
    ```
 
    Then set `TF_VAR_hosturl`, `TF_VAR_username` and `TF_VAR_password`, and replace the passphrase in `TF_ENCRYPTION` (at least 16 random characters). Keep a copy of that passphrase outside this machine: without it the state cannot be read.
+
+   The passwords of the extra RouterOS users declared in `users` go in `TF_VAR_user_passwords`, a JSON object keyed by user name (at least 24 random characters each). They never go in `terraform.tfvars`. A service that reads one of them keeps its own copy: the `mktxp` password is also stored SOPS-encrypted in the Frontplane repository.
 
    The provider verifies the router certificate against `certs/router-ca.pem`, a local file that is not committed. Fetch it as described in [the runbook](docs/runbook-reset.md#6-bring-the-router-back-under-opentofu). The first run after a router reset can use `TF_VAR_insecure_tls=true` instead.
 

@@ -107,6 +107,17 @@ ssh user@192.168.2.254 '/ip firewall filter print'
 
 The accept rules must sit above `drop invalid` and `drop all from WAN not DSTNATed`, and the custom drops at the end. `tofu plan` also reports a rule that was moved by hand, because the provider reads the real order of the rules it manages.
 
+### API service (not under OpenTofu)
+
+The `api-ssl` service is set by hand, not by OpenTofu. `base_configuration.rsc` leaves it enabled, but a reset router has no certificate on it and no source restriction. Set both, and check them:
+
+```bash
+ssh user@192.168.2.254 '/ip service set api-ssl certificate=router-https tls-version=only-1.2 address=10.2.0.1/32,10.2.0.2/32,10.2.0.3/32'
+ssh user@192.168.2.254 '/ip service print detail where name=api-ssl'
+```
+
+The addresses are the `core-nodes`. The `api-ssl-from-core` firewall rule and the read-only `mktxp` user (`user_groups` and `users` in `terraform.tfvars`) do come from OpenTofu.
+
 ## 7. Check the result
 
 1. `tofu plan` shows no changes (apart from known drift).

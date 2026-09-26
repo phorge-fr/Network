@@ -68,6 +68,16 @@ locals {
     ])
   }
 
+  # Prefixes a user is restricted to: the nodes of the networks in allowed_from plus the explicit
+  # allowed_addresses, comma separated as RouterOS wants them. Empty means unrestricted, which the
+  # resource refuses when a restriction was asked for but resolved to nothing (a network without nodes).
+  user_sources = {
+    for name, u in var.users : name => join(",", concat(
+      flatten([for n in u.allowed_from : [for ip in local.node_ips[n] : "${ip}/32"]]),
+      u.allowed_addresses,
+    ))
+  }
+
   template_vars = {
     ingress     = local.ingress_ips
     incus_nodes = local.node_ips["comp-ew"]

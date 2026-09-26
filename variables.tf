@@ -14,6 +14,38 @@ variable "password" {
   sensitive   = true
 }
 
+variable "user_groups" {
+  description = "RouterOS user groups, keyed by name. policy is the list of RouterOS policies the group grants (api, read, write, sensitive...). The groups of the base configuration are not managed here."
+  type = map(object({
+    policy  = list(string)
+    comment = optional(string, "tofu;;;")
+  }))
+  default = {}
+}
+
+variable "users" {
+  description = "RouterOS users, keyed by name. group is a key of user_groups or a group of the base configuration. allowed_from lists the networks whose nodes may log in, allowed_addresses adds explicit prefixes; with neither, the user can log in from anywhere. The passwords are in user_passwords."
+  type = map(object({
+    group             = string
+    allowed_from      = optional(list(string), [])
+    allowed_addresses = optional(list(string), [])
+    comment           = optional(string, "tofu;;;")
+  }))
+  default = {}
+
+  validation {
+    condition     = alltrue([for u in var.users : alltrue([for n in u.allowed_from : contains(keys(var.networks), n)])])
+    error_message = "allowed_from must contain names of networks."
+  }
+}
+
+variable "user_passwords" {
+  description = "Passwords of the users, keyed by user name. They never go in terraform.tfvars: set TF_VAR_user_passwords in .env as a JSON object. Every user needs one of at least 24 characters."
+  type        = map(string)
+  sensitive   = true
+  default     = {}
+}
+
 variable "insecure_tls" {
   description = "Skip the verification of the router certificate. Only for the first run after a router reset, before certs/router-ca.pem has been refreshed."
   type        = bool

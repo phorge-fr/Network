@@ -55,6 +55,7 @@ dns_records = [
 firewall_rules = [
   { id = "dns-tcp-from-phorge", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "phorge", dst_port = "53", protocol = "tcp", comment = "tofu;;; Allow TCP DNS from phorge" },
   { id = "dns-udp-from-phorge", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "phorge", dst_port = "53", protocol = "udp", comment = "tofu;;; Allow UDP DNS from phorge" },
+  { id = "api-ssl-from-core", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "phorge", src_address_list = "core-nodes", dst_port = "8729", protocol = "tcp", comment = "tofu;;; Allow the RouterOS API over TLS from the core nodes" },
 
   # A container may only use the address of its veth: this rule stays first, above every accept that matches by address
   { id = "containers-anti-spoof", chain = "forward", action = "drop", before = "defconf: drop invalid", in_interface = "containers", src_address_list = "!container-ips", log = true, log_prefix = "ctr-spoof", comment = "tofu;;; Drop packets from containers with a source that is not a container address" },
@@ -82,6 +83,17 @@ firewall_nat_rules = [
   { chain = "dstnat", action = "dst-nat", protocol = "tcp", dst_port = "443", to_addresses = "172.17.0.2", to_ports = "8443", in_interface_list = "WAN", comment = "tofu;;; Allow 443/TCP to Haproxy" },
   { chain = "srcnat", action = "masquerade", src_address = "172.17.0.0/24", comment = "tofu;;; Masquerade outbound traffic for docker" },
 ]
+
+# Groups and users of RouterOS besides the account of the base configuration. Passwords are not here:
+# they come from TF_VAR_user_passwords (see .env.example).
+user_groups = {
+  monitoring = { policy = ["api", "read"], comment = "tofu;;; Login to the API and read, no write and no access to the secrets" },
+}
+
+users = {
+  mktxp = { group = "monitoring", allowed_from = ["core"], comment = "tofu;;; MKTXP exporter, from the core nodes only" },
+}
+
 interface_lists = [
   { name = "Containers", members = ["containers", "veth1"] },
 ]
