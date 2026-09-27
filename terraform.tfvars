@@ -12,7 +12,7 @@ networks = {
   stor    = { vlan_id = 50, cidr = "10.4.0.0/24", dhcp_pool = "10.4.0.1-10.4.0.253", nodes = ["10.4.0.1"] }
   ai      = { vlan_id = 60, cidr = "10.5.0.0/24", dhcp_pool = "10.5.0.1-10.5.0.253", nodes = ["10.5.0.1-10.5.0.2"] }
   comp-ew = { vlan_id = 70, cidr = "10.10.0.0/24", dhcp_pool = "10.10.0.1-10.10.0.253", nodes = ["10.10.0.1-10.10.0.3"], address_list = "comp-nodes" }
-  comp-ns = { vlan_id = 80, cidr = "10.10.1.0/24" }
+  comp-ns = { vlan_id = 80, cidr = "10.11.0.0/24" }
 }
 
 ip_addresses = [
@@ -55,6 +55,7 @@ dns_records = [
 firewall_rules = [
   { id = "dns-tcp-from-phorge", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "phorge", dst_port = "53", protocol = "tcp", comment = "tofu;;; Allow TCP DNS from phorge" },
   { id = "dns-udp-from-phorge", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "phorge", dst_port = "53", protocol = "udp", comment = "tofu;;; Allow UDP DNS from phorge" },
+  { id = "bgp-from-comp", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface = "comp-ew", src_address_list = "comp-nodes", dst_port = "179", protocol = "tcp", comment = "tofu;;; Allow BGP from the Incus compute nodes" },
   { id = "api-ssl-from-core", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "phorge", src_address_list = "core-nodes", dst_port = "8729", protocol = "tcp", comment = "tofu;;; Allow the RouterOS API over TLS from the core nodes" },
 
   # A container may only use the address of its veth: this rule stays first, above every accept that matches by address

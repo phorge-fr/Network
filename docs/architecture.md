@@ -60,9 +60,11 @@ flowchart TB
 | stor | 50 | 10.4.0.0/24 | 10.4.0.254 | `phorge` | 10.4.0.1-253 | storage node |
 | ai | 60 | 10.5.0.0/24 | 10.5.0.254 | `phorge` | 10.5.0.1-253 | HPC nodes |
 | comp-ew | 70 | 10.10.0.0/24 | 10.10.0.254 | `phorge` | 10.10.0.1-253 | Incus compute nodes (east-west) |
-| comp-ns | 80 | 10.10.1.0/24 | 10.10.1.254 | `phorge` | none | Incus north-south |
+| comp-ns | 80 | 10.11.0.0/24 | 10.11.0.254 | `phorge` | none | Incus north-south: external addresses of the OVN routers (`ipv4.ovn.ranges` 10.11.0.10-250 on the Incus `UPLINK`) |
 | containers | bridge | 172.17.0.0/24 | 172.17.0.1 | `Containers` | none | HAProxy (`veth1`, 172.17.0.2) |
 | WAN | `ether1` | 192.168.1.0/24 | 192.168.1.103 (DHCP) | `WAN` | none | ISP box 192.168.1.1 |
+
+**10.12.0.0/24 is not a VLAN.** It is the routed prefix for Incus network forwards and load balancers: the Incus `UPLINK` lists it in `ipv4.routes`, Incus announces each forward or load balancer address (a /32) over BGP with the OVN router address on comp-ns as next hop, and the router learns them through `bgp_connections`. The router has no interface, gateway or DHCP in it, so nothing answers for an address that is not announced. Exposing one to the Internet is a dst-NAT or an HAProxy backend towards that address, plus the forward rule that allows it.
 
 Address conventions inside each cluster VLAN:
 
@@ -110,7 +112,7 @@ Observed on 2026-09-20 from the link state and the bridge host table. Check it a
 | storage | `stor-rpi5-01` | 10.4.0.1 | RAID 5 on 4 NVMe (`/mnt/main`), NFS export, rustfs S3 | Ansible |
 | hpc-gpu | `ai-z440-01` | 10.5.0.4 (DHCP lease) | GPU node (ROCm/NVIDIA drivers, Docker) | Ansible |
 | hpc-npu | `ai-rpi5-01` | 10.5.0.1 | NPU node | Ansible |
-| compute | `comp-opti-01` to `03` | 10.10.0.1-3 | Incus cluster | Ansible (SSH, firewall), manual Incus setup |
+| compute | `comp-opti-01` to `03` | 10.10.0.1-3 | Incus cluster | Ansible (SSH, firewall, Incus, Ceph, OVN, Alloy) |
 
 All three clusters run the same stack: k0s 1.36.4, Cilium 1.19.2 as CNI with kube-proxy disabled and L2 announcements for load balancer IPs, a Keepalived virtual IP for the API, pod CIDR 10.244.0.0/16 and service CIDR 10.96.0.0/12. Flux reconciles `clusters/<name>` from FrontPlane.
 
@@ -130,7 +132,7 @@ The storage node exports `/mnt/main/csi-svc` over NFSv4 to the three svc nodes a
 | `monitoring.phorge.fr` | core | Grafana | HAProxy, `traefik-public` 10.2.0.11 |
 | `status.phorge.fr` | core | Uptime Kuma | HAProxy, `traefik-public` 10.2.0.11 |
 | `git.phorge.fr` | svc | Forgejo | HAProxy, `traefik-public` 10.3.0.11 |
-| `iaas.phorge.fr` | compute | Incus API and UI | HAProxy SNI routing to 10.10.0.1-3:8443 (currently blocked, see [flows](#traffic-flows)) |
+| `iaas.phorge.fr` | compute | Incus API and UI | HAProxy SNI routing to 10.10.0.1-3:8443 (rule `Allow Hproxy to Incus cluster API`, see [flows](#traffic-flows)) |
 | `prometheus.core.phorge`, `loki.core.phorge`, `openfga.core.phorge` | core | Prometheus, Loki, OpenFGA | `traefik-local` 10.2.0.10, internal CA, basic auth |
 
 Forgejo also serves Git over SSH on 10.3.0.13:22, internal only.
@@ -166,7 +168,8 @@ flowchart LR
     ha -->|"80,443 PROXY v2"| coreing
     ha -->|"80,443 PROXY v2"| svcing
     ha -.->|"no rule"| ctrling
-    ha -.->|"8443, no rule"| incus
+    ha -->|"8443"| incus
+    incus -->|"443 Loki, OpenFGA"| corelocal
     ctrln -->|"443 Alloy"| corelocal
     svcn -->|"443 Alloy"| corelocal
     stor -->|"443 Alloy"| corelocal
@@ -182,7 +185,7 @@ Dotted arrows are flows that the architecture asks for but the firewall does not
 | HAProxy to core ingress 10.2.0.11 | TCP 80, 443 | `Allow Hproxy to core cluster Ingress` | allowed |
 | HAProxy to svc ingress 10.3.0.11 | TCP 80, 443 | `Allow Hproxy to svc cluster Ingress` | allowed |
 | HAProxy to control ingress 10.1.0.11 (default backend) | TCP 80, 443 | none | blocked by `Drop Containers to phorge` |
-| HAProxy to Incus 10.10.0.1-3 (backend and health checks) | TCP 8443 | none | blocked by `Drop Containers to phorge` |
+| HAProxy to Incus 10.10.0.1-3 (backend and health checks) | TCP 8443 | `Allow Hproxy to Incus cluster API` | allowed |
 | ctrl, svc, stor nodes to core `traefik-local` (Alloy metrics and logs) | TCP 443 | three `push metrics/logs to core` rules | allowed |
 | svc nodes to storage (NFS) | TCP 2049 | `NFS/TCP` rule | allowed |
 | svc nodes to storage (NFS) | UDP 2049 | `NFS/UDP` rule | allowed, unused: NFSv4 uses TCP and the host firewall only opens TCP |
@@ -191,7 +194,8 @@ Dotted arrows are flows that the architecture asks for but the firewall does not
 | Any VLAN to the router | TCP and UDP 53, ICMP | two DNS input rules | allowed |
 | VLANs to the Internet | any | masquerade | allowed: image pulls, ACME, GitHub (Flux, Renovate), Cloudflare API |
 | svc (Forgejo) to `auth.phorge.fr` (OIDC) | TCP 443 | none towards core | resolves through public DNS and leaves through the WAN, so it depends on NAT hairpin at the ISP box: to verify |
-| Incus nodes to core `traefik-local` (Loki, OpenFGA) and BGP to the router | TCP 443, TCP 179 | none | needed when the IaaS goes live; `comp-nodes` exists but no rule uses it |
+| Incus nodes to core `traefik-local` (Loki logs and events, OpenFGA authorization; Alloy metrics and logs) | TCP 443 | `incus-comp-to-core` | allowed |
+| Incus nodes to the router (BGP) | TCP 179 | `bgp-from-comp` (input chain) | allowed |
 | Control cluster to the LLM gateway (LiteLLM, TCP 4000) on the HPC node | TCP 4000 | none | implied by the control cluster role and the `hpc-servers` role, which is not wired yet |
 
 ## DNS, TLS and secrets
@@ -210,7 +214,7 @@ Dotted arrows are flows that the architecture asks for but the firewall does not
 
 Planned work that is visible in the repositories:
 
-- **IaaS** on the Incus cluster: OVN networking, MicroCeph storage, BGP peering with the router (the `bgp_connections` resource and the commented examples in `terraform.tfvars`), OIDC through Authentik and authorization through OpenFGA. The procedure is in `docs/incus-installation.md` of the Ansible repository.
+- **IaaS** on the Incus cluster: deployed (OVN networking, Ceph storage, OIDC through Authentik, authorization through OpenFGA, monitoring through Alloy), see `docs/incus-installation.md` of the Ansible repository. The BGP peers are on the Incus `UPLINK` and a forward on 10.12.0.0/24 was tested end to end. Left: the north-south link of `comp-opti-03` (no carrier) and of `comp-opti-01` (100 Mbit/s), tracked in phorge-fr/Ansible#11 and #12.
 - **HPC and AI**: the `hpc-servers` Ansible role (LiteLLM gateway, llama.cpp servers, monitoring) is not wired to a playbook yet.
 - **Provisioning**: Crossplane on the control cluster.
 - **Backups**: Longhorn on core backing up to rustfs on the storage node.
@@ -223,12 +227,11 @@ Things that disagree between files or between a file and the live router. None i
 
 1. DHCP pools span `.1` to `.253` of every cluster VLAN, so they overlap the nodes (`.1`-`.3`), the API virtual IP (`.4`) and the Cilium pool (`.10`-`.20`).
 2. The `nfs-uncritical` StorageClass on `control` and `core` points to NFS server 10.6.0.1. No 10.6.0.0/24 network exists on the router.
-3. HAProxy targets 10.1.0.11 and 10.10.0.1-3:8443 that the firewall does not allow (about 406,000 packets dropped by `Drop Containers to phorge` in the 3 days before 2026-09-20).
-4. `docs/incus-installation.md` (Ansible) uses 10.1.0.x node addresses, six OVN endpoints and `*.frontplane.phorge` names. The inventory has three Incus nodes on 10.10.0.1-3, and internal names are `*.core.phorge`. The commented BGP examples in `terraform.tfvars` also use 10.1.0.1-6.
-5. The GPU host is `ai-z440-01` in the inventory, holds a DHCP lease (10.5.0.4) under the hostname `hpc1`, has no DNS record, and is outside `ai-nodes` (10.5.0.1-2). The HPC monitoring config scrapes `hpc0.phorge`.
-6. The FrontPlane README bootstraps Flux from a repository called `Hangar`.
-7. The three clusters share the pod and service CIDRs (10.244.0.0/16, 10.96.0.0/12), which rules out a future cluster mesh or direct pod routing between them.
-8. `base_configuration.rsc` disables `ether10`, the intended switch uplink.
+3. HAProxy targets 10.1.0.11 that the firewall does not allow (about 406,000 packets dropped by `Drop Containers to phorge` in the 3 days before 2026-09-20, most of them towards 10.10.0.1-3:8443 until `Allow Hproxy to Incus cluster API` was added).
+4. The GPU host is `ai-z440-01` in the inventory, holds a DHCP lease (10.5.0.4) under the hostname `hpc1`, has no DNS record, and is outside `ai-nodes` (10.5.0.1-2). The HPC monitoring config scrapes `hpc0.phorge`.
+5. The FrontPlane README bootstraps Flux from a repository called `Hangar`.
+6. The three clusters share the pod and service CIDRs (10.244.0.0/16, 10.96.0.0/12), which rules out a future cluster mesh or direct pod routing between them.
+7. `base_configuration.rsc` disables `ether10`, the intended switch uplink.
 
 ## Change checklists
 
