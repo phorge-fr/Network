@@ -57,6 +57,7 @@ firewall_rules = [
   { id = "dns-udp-from-phorge", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "phorge", dst_port = "53", protocol = "udp", comment = "tofu;;; Allow UDP DNS from phorge" },
   { id = "bgp-from-comp", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface = "comp-ew", src_address_list = "comp-nodes", dst_port = "179", protocol = "tcp", comment = "tofu;;; Allow BGP from the Incus compute nodes" },
   { id = "api-ssl-from-core", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "phorge", src_address_list = "core-nodes", dst_port = "8729", protocol = "tcp", comment = "tofu;;; Allow the RouterOS API over TLS from the core nodes" },
+  { id = "ntp-from-phorge", chain = "input", action = "accept", before = "defconf: drop all not coming from LAN", in_interface_list = "phorge", dst_port = "123", protocol = "udp", comment = "tofu;;; Allow NTP from the phorge VLANs" },
 
   # A container may only use the address of its veth: this rule stays first, above every accept that matches by address
   { id = "containers-anti-spoof", chain = "forward", action = "drop", before = "defconf: drop invalid", in_interface = "containers", src_address_list = "!container-ips", log = true, log_prefix = "ctr-spoof", comment = "tofu;;; Drop packets from containers with a source that is not a container address" },
