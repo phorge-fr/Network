@@ -47,6 +47,7 @@ dns_records = [
   { name = "prometheus.core.phorge", address = "10.2.0.10", type = "A" },
   { name = "loki.core.phorge", address = "10.2.0.10", type = "A" },
   { name = "openfga.core.phorge", address = "10.2.0.10", type = "A" },
+  { name = "crossview.control.phorge", address = "10.1.0.10", type = "A" },
 ]
 
 
