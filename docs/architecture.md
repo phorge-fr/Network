@@ -134,6 +134,7 @@ The storage node exports `/mnt/main/csi-svc` over NFSv4 to the three svc nodes a
 | `git.phorge.fr` | svc | Forgejo | HAProxy, `traefik-public` 10.3.0.11 |
 | `iaas.phorge.fr` | compute | Incus API and UI | HAProxy SNI routing to 10.10.0.1-3:8443 (rule `Allow Hproxy to Incus cluster API`, see [flows](#traffic-flows)) |
 | `prometheus.core.phorge`, `loki.core.phorge`, `openfga.core.phorge` | core | Prometheus, Loki, OpenFGA | `traefik-local` 10.2.0.10, internal CA, basic auth |
+| `crossview.control.phorge` | control | Crossview (Crossplane UI, authentik SSO) | `traefik-local` 10.1.0.10, internal CA |
 
 Forgejo also serves Git over SSH on 10.3.0.13:22, internal only.
 
