@@ -131,6 +131,8 @@ The storage node exports `/mnt/main/csi-svc` over NFSv4 to the three svc nodes a
 | `auth.phorge.fr` | core | Authentik (OIDC SSO) | HAProxy, `traefik-public` 10.2.0.11 |
 | `monitoring.phorge.fr` | core | Grafana | HAProxy, `traefik-public` 10.2.0.11 |
 | `status.phorge.fr` | core | Uptime Kuma | HAProxy, `traefik-public` 10.2.0.11 |
+| `api.phorge.fr` | control | Phorge API (`/v1`, OpenAPI and Swagger UI only) | HAProxy, `traefik-public` 10.1.0.11 |
+| `cap.phorge.fr` | core | Cap (captcha of the Authentik sign-in, only `/assets` and the site key are public) | HAProxy, `traefik-public` 10.2.0.11 |
 | `git.phorge.fr` | svc | Forgejo | HAProxy, `traefik-public` 10.3.0.11 |
 | `iaas.phorge.fr` | compute | Incus API and UI | HAProxy SNI routing to 10.10.0.1-3:8443 (rule `Allow Hproxy to Incus cluster API`, see [flows](#traffic-flows)) |
 | `prometheus.core.phorge`, `loki.core.phorge`, `openfga.core.phorge` | core | Prometheus, Loki, OpenFGA | `traefik-local` 10.2.0.10, internal CA, basic auth |
@@ -138,7 +140,7 @@ The storage node exports `/mnt/main/csi-svc` over NFSv4 to the three svc nodes a
 
 Forgejo also serves Git over SSH on 10.3.0.13:22, internal only.
 
-HAProxy ([templates/haproxy.cfg.tftpl](../templates/haproxy.cfg.tftpl)) routes plain HTTP on 8080 (redirect to HTTPS for the five known hosts, everything else to the control ingress) and TLS on 8443 by SNI without terminating it: `iaas` to the Incus nodes, `auth`, `monitoring` and `status` to the core ingress, `git` to the svc ingress, anything else to the control ingress. A change to the file is picked up by the running container without a restart. HAProxy runs as uid 99 with no capability although the container user is `0:0`, and the image is pinned by digest (see the runbook). The ingress addresses and the Incus node addresses are not typed in the template: they come from `networks` (`ingress` and `nodes`), and the rules that let the container reach the ingresses use the same data.
+HAProxy ([templates/haproxy.cfg.tftpl](../templates/haproxy.cfg.tftpl)) routes plain HTTP on 8080 (redirect to HTTPS for the seven known hosts, everything else to the control ingress) and TLS on 8443 by SNI without terminating it: `iaas` to the Incus nodes, `api` to the control ingress, `auth`, `monitoring`, `status` and `cap` to the core ingress, `git` to the svc ingress, anything else to the control ingress. A change to the file is picked up by the running container without a restart. HAProxy runs as uid 99 with no capability although the container user is `0:0`, and the image is pinned by digest (see the runbook). The ingress addresses and the Incus node addresses are not typed in the template: they come from `networks` (`ingress` and `nodes`), and the rules that let the container reach the ingresses use the same data.
 
 Client addresses reach the ingresses through the PROXY protocol v2. HAProxy traffic is masqueraded by the router (NAT rule for 172.17.0.0/24), so each Traefik trusts PROXY headers only from the router address of its VLAN (`x.0.254/32`, set in `overlays/*/controllers/traefik/traefik-public-patch.yml`). Changing that NAT rule, the HAProxy source or the Traefik `trustedIPs` breaks client address preservation.
 
