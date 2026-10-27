@@ -70,6 +70,12 @@ frontend http-dispatcher
     acl host_status hdr(host) -i status.phorge.fr
     http-request redirect scheme https code 301 if host_status
 
+    acl host_api hdr(host) -i api.phorge.fr
+    http-request redirect scheme https code 301 if host_api
+
+    acl host_cap hdr(host) -i cap.phorge.fr
+    http-request redirect scheme https code 301 if host_cap
+
     acl host_git hdr(host) -i git.phorge.fr
     http-request redirect scheme https code 301 if host_git
 
@@ -89,6 +95,10 @@ frontend sni-dispatcher
     use_backend https-core-ingress if { req.ssl_sni -i monitoring.phorge.fr }
 
     use_backend https-core-ingress if { req.ssl_sni -i status.phorge.fr }
+
+    use_backend https-control-ingress if { req.ssl_sni -i api.phorge.fr }
+
+    use_backend https-core-ingress if { req.ssl_sni -i cap.phorge.fr }
 
     use_backend https-svc-ingress if { req.ssl_sni -i git.phorge.fr }
 
