@@ -18,15 +18,15 @@ The router was reset and rebuilt by hand once. Drift between the bootstrap scrip
 ## Considered options
 
 * Three layers: factory configuration, the maintainer's bootstrap script, OpenTofu for the rest.
-* OpenTofu for everything, including Ethernet ports and DNS settings.
+* OpenTofu for everything, including Ethernet ports, and DNS settings.
 
 ## Decision outcome
 
 Chosen option: "three layers".
 
 * `defaults/default_configuration.rsc` is the MikroTik factory configuration. Never edit it.
-* `defaults/base_configuration.rsc` is the maintainer's script that pre-provisions the router after a reset: DNS servers, hardening, certificates, services, Ethernet port MTU and L2MTU, which ports are disabled, the management LAN and base users.
-* OpenTofu owns VLANs, addresses, DHCP, DNS records, the firewall, NAT, containers and the HAProxy configuration.
+* `defaults/base_configuration.rsc` is the maintainer's script that pre-provisions the router after a reset: DNS servers, hardening, certificates, services, Ethernet port MTU and L2MTU, which ports are disabled, the management LAN, and base users.
+* OpenTofu owns VLANs, addresses, DHCP, DNS records, the firewall, NAT, containers, and the HAProxy configuration.
 
 ### Consequences
 

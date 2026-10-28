@@ -99,7 +99,7 @@ A reset router has none of the objects that the state remembers, and RouterOS id
 - Objects that the plan wants to create and that the router already has (an ID that changed): adopt them with `tofu import '<address>' '<id>'`, or drop the stale entry with `tofu state rm '<address>'` and let the plan create it. The uploaded `haproxy.cfg` is the exception: an `import` block in `containers.tf` adopts it whenever it already exists on the router.
 - Objects that no longer exist: the plan recreates them, which is the goal.
 
-`tofu apply` needs an explicit go-ahead from whoever owns the router. It creates the VLANs, addresses, DHCP, DNS, firewall, NAT, the veth and bridge for containers, the HAProxy configuration file and the container.
+`tofu apply` needs an explicit go-ahead from whoever owns the router. It creates the VLANs, addresses, DHCP, DNS, firewall, NAT, the veth and bridge for containers, the HAProxy configuration file, and the container.
 
 ### Firewall rule order
 

@@ -34,4 +34,4 @@ Chosen option: "commit neither". The state is not committed, even encrypted; `ce
 ### Commit the state encrypted
 
 * Good, because a backup in Git.
-* Bad, because permanent history, churn and no locking.
+* Bad, because permanent history, churn, and no locking.
