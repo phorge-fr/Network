@@ -91,3 +91,15 @@ The VLANs, IP addresses, bridges and bridge ports have `prevent_destroy`: a plan
 ## Setting up the router for the first time
 
 Follow [the runbook](docs/runbook-reset.md). In short: replace the placeholders in `defaults/base_configuration.rsc`, reset the router with the factory defaults, upload `defaults/Phorge.dpk`, import the base configuration, then run OpenTofu.
+
+## Contributing
+
+Every change starts from an issue and goes through a pull request; the rules (issue link, label, milestone, assignee, reviewer) are in the organization's [GOVERNANCE](https://github.com/phorge-fr/.github/blob/main/GOVERNANCE.md) and [CONTRIBUTING](https://github.com/phorge-fr/.github/blob/main/CONTRIBUTING.md). Planned work is on the public [Roadmap](https://github.com/orgs/phorge-fr/projects/3). Everyone taking part follows the [Code of Conduct](https://github.com/phorge-fr/.github/blob/main/CODE_OF_CONDUCT.md).
+
+## Security
+
+Report vulnerabilities privately, as described in the [security policy](https://github.com/phorge-fr/.github/blob/main/SECURITY.md). Do not open a public issue for them.
+
+## License
+
+No license has been chosen yet, so the code is not yet open for reuse; the decision is tracked in [phorge-fr/.github#18](https://github.com/phorge-fr/.github/issues/18).
