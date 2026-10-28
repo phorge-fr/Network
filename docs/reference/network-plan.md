@@ -1,53 +1,12 @@
-# Phorge infrastructure: architecture and network plan
+---
+type: reference
+audience: anyone who looks up an address, a VLAN, a host or a flow
+verified: 2026-10-27
+---
 
-How the Phorge infrastructure fits together and how this repository relates to the other two. Written from the live router (RouterOS 7.19, observed on 2026-09-20), the OpenTofu configuration, and the [FrontPlane](https://github.com/phorge-fr/Frontplane) and [Ansible](https://github.com/phorge-fr/Ansible) repositories. When a fact changes, fix it here in the same change.
+# Network plan
 
-- [Repositories](#repositories)
-- [Topology](#topology)
-- [Network plan](#network-plan)
-- [Physical wiring](#physical-wiring)
-- [Hosts and clusters](#hosts-and-clusters)
-- [Services and public hostnames](#services-and-public-hostnames)
-- [Traffic flows](#traffic-flows)
-- [DNS, TLS and secrets](#dns-tls-and-secrets)
-- [Roadmap](#roadmap)
-- [Known inconsistencies](#known-inconsistencies)
-- [Change checklists](#change-checklists)
-
-## Repositories
-
-| Repository | Owns | Tooling |
-|---|---|---|
-| **Network** (this one) | The edge router: VLANs, addressing, DHCP, DNS, firewall, NAT, and the HAProxy container that publishes services | OpenTofu, RouterOS scripts |
-| **FrontPlane** | The three k0s Kubernetes clusters `control`, `core` and `svc` and everything that runs in them | FluxCD, SOPS + age, k0sctl, Cilium |
-| **Ansible** | Everything that is not Kubernetes: the storage node, the HPC nodes, the Incus compute nodes, SSH hardening and the host firewalls | Ansible, Vault |
-
-A flow between two VLANs has to be allowed in up to three places: the router (`firewall_rules` in [terraform.tfvars](../terraform.tfvars)), the host firewall (`firewall_allowed_ports` in the Ansible inventory) and, for pod traffic, a NetworkPolicy in FrontPlane. See the [checklists](#change-checklists).
-
-## Topology
-
-```mermaid
-flowchart TB
-    net(["Internet"])
-    isp["ISP box<br/>192.168.1.1"]
-    subgraph router["RB3011 edge router - RouterOS 7.19"]
-        wan["ether1 WAN<br/>192.168.1.103"]
-        ha["HAProxy container<br/>172.17.0.2"]
-        gw["bridge + VLAN interfaces<br/>gateway x.0.254"]
-    end
-    net --> isp
-    isp -->|"TCP 80/443"| wan
-    wan -->|"dst-nat 8080/8443"| ha
-    ha --> gw
-    gw ---|"ether2"| swa["switch: ctrl, core, comp, ai hosts"]
-    gw ---|"ether5"| swb["switch main-sw-1: stor, svc hosts"]
-    gw ---|"ether3"| adm["admin workstation"]
-```
-
-- The router is the only gateway. `ether1` is a DHCP client of the ISP box. The ISP box forwards TCP 80 and 443 to the router, which dst-NATs them to a HAProxy container running on the router itself (bridge `containers`, 172.17.0.0/24).
-- The `bridge` carries the management LAN untagged (192.168.2.0/24) and the workload VLANs 20 to 80 as tagged sub-interfaces. VLAN filtering is off: every bridge port carries every VLAN, and isolation between VLANs is done by routing and the firewall on the router only.
-- The VLAN interfaces use MTU 8152, so the bridge and every physical port under it need an L2MTU of at least 8156 (the bridge L2MTU is the lowest of its ports). [base_configuration.rsc](../defaults/base_configuration.rsc) sets `l2mtu=8156` and `mtu=8156` on every Ethernet port.
-- The RB3011 has two switch chips (`ether1` to `ether5` on `switch1`, `ether6` to `ether10` on `switch2`). Traffic between the two groups is bridged by the CPU.
+Observed on the live router (RouterOS 7.19) and in the OpenTofu configuration. [How it fits together](../explanation/architecture.md).
 
 ## Network plan
 
@@ -140,7 +99,7 @@ The storage node exports `/mnt/main/csi-svc` over NFSv4 to the three svc nodes a
 
 Forgejo also serves Git over SSH on 10.3.0.13:22, internal only.
 
-HAProxy ([templates/haproxy.cfg.tftpl](../templates/haproxy.cfg.tftpl)) routes plain HTTP on 8080 (redirect to HTTPS for the seven known hosts, everything else to the control ingress) and TLS on 8443 by SNI without terminating it: `iaas` to the Incus nodes, `api` to the control ingress, `auth`, `monitoring`, `status` and `cap` to the core ingress, `git` to the svc ingress, anything else to the control ingress. A change to the file is picked up by the running container without a restart. HAProxy runs as uid 99 with no capability although the container user is `0:0`, and the image is pinned by digest (see the runbook). The ingress addresses and the Incus node addresses are not typed in the template: they come from `networks` (`ingress` and `nodes`), and the rules that let the container reach the ingresses use the same data.
+HAProxy ([templates/haproxy.cfg.tftpl](../../templates/haproxy.cfg.tftpl)) routes plain HTTP on 8080 (redirect to HTTPS for the seven known hosts, everything else to the control ingress) and TLS on 8443 by SNI without terminating it: `iaas` to the Incus nodes, `api` to the control ingress, `auth`, `monitoring`, `status` and `cap` to the core ingress, `git` to the svc ingress, anything else to the control ingress. A change to the file is picked up by the running container without a restart. HAProxy runs as uid 99 with no capability although the container user is `0:0`, and the image is pinned by digest (see the runbook). The ingress addresses and the Incus node addresses are not typed in the template: they come from `networks` (`ingress` and `nodes`), and the rules that let the container reach the ingresses use the same data.
 
 Client addresses reach the ingresses through the PROXY protocol v2. HAProxy traffic is masqueraded by the router (NAT rule for 172.17.0.0/24), so each Traefik trusts PROXY headers only from the router address of its VLAN (`x.0.254/32`, set in `overlays/*/controllers/traefik/traefik-public-patch.yml`). Changing that NAT rule, the HAProxy source or the Traefik `trustedIPs` breaks client address preservation.
 
@@ -200,62 +159,3 @@ Dotted arrows are flows that the architecture asks for but the firewall does not
 | Incus nodes to core `traefik-local` (Loki logs and events, OpenFGA authorization; Alloy metrics and logs) | TCP 443 | `incus-comp-to-core` | allowed |
 | Incus nodes to the router (BGP) | TCP 179 | `bgp-from-comp` (input chain) | allowed |
 | Control cluster to the LLM gateway (LiteLLM, TCP 4000) on the HPC node | TCP 4000 | none | implied by the control cluster role and the `hpc-servers` role, which is not wired yet |
-
-## DNS, TLS and secrets
-
-**DNS.** The router is the resolver of every VLAN (DHCP hands out `x.0.254`). It forwards to 1.1.1.1 and to the ISP box learned by DHCP. Static records for the nodes (`*.phorge`) and the three `*.core.phorge` aliases live in `dns_records`. Public `phorge.fr` names are on Cloudflare.
-
-**TLS.**
-
-- Public hostnames: Let's Encrypt through cert-manager (`public-issuer`, DNS-01 with a Cloudflare token) on `traefik-public`.
-- Internal hostnames: `local-root-ca`, a self-signed ECDSA CA issued by cert-manager (10 years) that signs `*.core.phorge`. Its certificate is copied to the storage node as `alloy_ca_cert`.
-- The router has its own CA (`Phorge-Core-0`, RSA 2048, valid to 2036) that signs the certificate of its HTTPS service (`router-https`, with `IP:192.168.2.254`, `core0.phorge` and `main-gw-0.phorge` as subject alternative names), which is the REST API OpenTofu talks to. The provider verifies it against `certs/router-ca.pem`, a local file that is not committed.
-
-**Secrets.** FrontPlane uses SOPS with age. Ansible uses Vault (inline `!vault` values, whole-file encryption for `.env` files). This repository keeps RouterOS credentials in `.env` (ignored) and the state in a local file (ignored) that OpenTofu encrypts with a passphrase kept in `.env`. All three GitHub repositories are public: commit ciphertext only, never plaintext.
-
-## Roadmap
-
-Planned work that is visible in the repositories:
-
-- **IaaS** on the Incus cluster: deployed (OVN networking, Ceph storage, OIDC through Authentik, authorization through OpenFGA, monitoring through Alloy), see `docs/incus-installation.md` of the Ansible repository. The BGP peers are on the Incus `UPLINK` and a forward on 10.12.0.0/24 was tested end to end. Left: the north-south link of `comp-opti-03` (no carrier) and of `comp-opti-01` (100 Mbit/s), tracked in phorge-fr/Ansible#11 and #12.
-- **HPC and AI**: the `hpc-servers` Ansible role (LiteLLM gateway, llama.cpp servers, monitoring) is not wired to a playbook yet.
-- **Provisioning**: Crossplane on the control cluster.
-- **Backups**: Longhorn on core backing up to rustfs on the storage node.
-
-Each of these needs router rules that do not exist yet: see the last rows of the [flow table](#traffic-flows).
-
-## Known inconsistencies
-
-Things that disagree between files or between a file and the live router. None is fixed by this document.
-
-1. DHCP pools span `.1` to `.253` of every cluster VLAN, so they overlap the nodes (`.1`-`.3`), the API virtual IP (`.4`) and the Cilium pool (`.10`-`.20`).
-2. The `nfs-uncritical` StorageClass on `control` and `core` points to NFS server 10.6.0.1. No 10.6.0.0/24 network exists on the router.
-3. HAProxy targets 10.1.0.11 that the firewall does not allow (about 406,000 packets dropped by `Drop Containers to phorge` in the 3 days before 2026-09-20, most of them towards 10.10.0.1-3:8443 until `Allow Hproxy to Incus cluster API` was added).
-4. The GPU host is `ai-z440-01` in the inventory, holds a DHCP lease (10.5.0.4) under the hostname `hpc1`, has no DNS record, and is outside `ai-nodes` (10.5.0.1-2). The HPC monitoring config scrapes `hpc0.phorge`.
-5. The FrontPlane README bootstraps Flux from a repository called `Hangar`.
-6. The three clusters share the pod and service CIDRs (10.244.0.0/16, 10.96.0.0/12), which rules out a future cluster mesh or direct pod routing between them.
-7. `base_configuration.rsc` disables `ether10`, the intended switch uplink.
-
-## Change checklists
-
-**New VLAN or cluster**
-
-1. Network: one entry in `networks` (the VLAN, the router address, the DHCP pool and server, the `phorge` interface list membership and the `<name>-nodes` address list are derived), plus `dns_records`.
-2. Ansible: inventory group, `firewall_allowed_ports` and `firewall_trusted_sources` in its `group_vars`.
-3. FrontPlane: `clusters/<name>/setup/` (k0s config, `ip-pools.yml`, the interface name in `l2announcementpolicy.yml`) and the Traefik patches in `overlays/<name>/controllers/traefik/`.
-4. If it is published: `ingress = 11` on its entry in `networks`, `templates/haproxy.cfg.tftpl`, then a router rule towards its ingress with `dst_ingress`.
-5. Update this document.
-
-**New flow between two VLANs**
-
-1. Router: a rule in `firewall_rules` with a unique `id`, `before = "defconf: drop invalid"` (forward accepts) and `in_interface` set.
-2. Host: `firewall_allowed_ports` (or `firewall_published_ports` for Docker) in Ansible.
-3. Pods: a NetworkPolicy or CiliumNetworkPolicy in FrontPlane if the destination is a pod.
-4. After applying, check that the rule counts packets: `/ip firewall filter print stats`.
-
-**New public hostname**
-
-1. DNS record at Cloudflare.
-2. FrontPlane: an Ingress with class `traefik-public` and `cert-manager.io/cluster-issuer: public-issuer`.
-3. `templates/haproxy.cfg.tftpl`: the host in the HTTP redirect ACLs and a `use_backend` line on the SNI frontend. After `tofu apply` the container reloads by itself.
-4. A router rule from `containers` to that cluster's ingress, if it is a new cluster.

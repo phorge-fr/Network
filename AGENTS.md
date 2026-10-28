@@ -4,7 +4,7 @@ Instructions for anyone working in this repository, human or AI assistant. The o
 
 ## What this repository is
 
-The OpenTofu configuration and bootstrap scripts of the edge router (a MikroTik running RouterOS 7). It owns VLANs, addressing, DHCP, DNS records, the firewall, NAT, and the container that runs HAProxy to publish services. Start with [docs/architecture.md](docs/architecture.md); the rebuild procedure is [docs/runbook-reset.md](docs/runbook-reset.md).
+The OpenTofu configuration and bootstrap scripts of the edge router (a MikroTik running RouterOS 7). It owns VLANs, addressing, DHCP, DNS records, the firewall, NAT, and the container that runs HAProxy to publish services. Start with [docs/explanation/architecture.md](docs/explanation/architecture.md) and [docs/reference/network-plan.md](docs/reference/network-plan.md); the rebuild procedure is [docs/how-to/reset-and-bootstrap-the-router.md](docs/how-to/reset-and-bootstrap-the-router.md).
 
 Three layers, each with an owner ([decision 0001](docs/decisions/0001-three-configuration-layers.md)):
 
@@ -35,7 +35,7 @@ When a finding concerns a system-level setting, the answer is "this goes in `bas
 - `prevent_destroy` guards the bridge, its ports, the VLANs and the IP addresses. The firewall order is managed with `routeros_move_items` and must match the live order.
 - HAProxy routes are edited in `templates/haproxy.cfg.tftpl`; `tofu apply` pushes the file and the container reloads by itself ([decision 0002](docs/decisions/0002-haproxy-hot-reload.md)). Do not re-add a Terraform data model for routes. Changing a container attribute restarts it; do not change `entrypoint` or `cmd` of the production container in place.
 - A new public host name needs a route in the HAProxy template (SNI and HTTP redirect): the edge does not forward unknown hosts to the right cluster.
-- `api-ssl` of the router and the monitoring user's password are partly manual, see `phorge-fr/Hangar` `docs/runbooks/router-monitoring.md`.
+- `api-ssl` of the router and the monitoring user's password are partly manual, see `phorge-fr/Hangar` `docs/how-to/fix-an-empty-router-dashboard.md`.
 
 ## Security reports
 
