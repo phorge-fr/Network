@@ -6,8 +6,8 @@ OpenTofu configuration and bootstrap scripts of the edge router of the [Phorge](
 
 Documentation:
 
-- [Architecture and network plan](docs/architecture.md): topology, VLANs and addresses, wiring, hosts and clusters, public services, traffic flows, change checklists.
-- [Reset and bootstrap runbook](docs/runbook-reset.md): rebuild the router from scratch and bring it back under OpenTofu.
+- [Documentation index](docs/README.md): how-to guides, the network plan, the architecture and the decision records.
+- [Reset and bootstrap the router](docs/how-to/reset-and-bootstrap-the-router.md): rebuild the router from scratch and bring it back under OpenTofu.
 
 Sibling repositories: [FrontPlane](https://github.com/phorge-fr/Frontplane) (Kubernetes clusters), [Ansible](https://github.com/phorge-fr/Ansible) (storage, HPC and compute nodes).
 
@@ -32,7 +32,7 @@ terraform.tfvars     Values: networks, DNS records, firewall, NAT, containers
 templates/           HAProxy configuration template and the script that reloads it
 certs/               Local trust anchor: the router CA (ignored by git, see the runbook)
 defaults/            RouterOS scripts: factory defaults, base configuration, Phorge.dpk
-docs/                Architecture and runbooks
+docs/                Documentation by type: how-to, reference, explanation, decisions
 ```
 
 One entry in `networks` (name, VLAN ID, CIDR, optionally a DHCP pool, node ranges and the host number of the public ingress) creates the VLAN, the router address (the last usable address of the subnet), the DHCP pool, network and server, the membership of the `phorge` interface list and the `<name>-nodes` address list. The ingress addresses also feed the HAProxy configuration and the rules that let the container reach them, so they exist in one place.
@@ -56,7 +56,7 @@ One entry in `networks` (name, VLAN ID, CIDR, optionally a DHCP pool, node range
 
    The passwords of the extra RouterOS users declared in `users` go in `TF_VAR_user_passwords`, a JSON object keyed by user name (at least 24 random characters each). They never go in `terraform.tfvars`. A service that reads one of them keeps its own copy: the `mktxp` password is also stored SOPS-encrypted in the Frontplane repository.
 
-   The provider verifies the router certificate against `certs/router-ca.pem`, a local file that is not committed. Fetch it as described in [the runbook](docs/runbook-reset.md#6-bring-the-router-back-under-opentofu). The first run after a router reset can use `TF_VAR_insecure_tls=true` instead.
+   The provider verifies the router certificate against `certs/router-ca.pem`, a local file that is not committed. Fetch it as described in [the reset how-to](docs/how-to/reset-and-bootstrap-the-router.md#6-bring-the-router-back-under-opentofu). The first run after a router reset can use `TF_VAR_insecure_tls=true` instead.
 
 2. Initialize:
 
@@ -74,7 +74,7 @@ One entry in `networks` (name, VLAN ID, CIDR, optionally a DHCP pool, node range
 
 Run every command from the repository root so that `terraform.tfvars` is loaded. Without it the plan stops on missing required variables.
 
-The HAProxy configuration is `templates/haproxy.cfg.tftpl`. Edit it and run `tofu apply`: the container reloads it by itself within about 15 seconds, without dropping connections (see [the runbook](docs/runbook-reset.md#haproxy-configuration-reload), including how to check that HAProxy accepted it). Do not edit the file on the router, the next apply would overwrite it.
+The HAProxy configuration is `templates/haproxy.cfg.tftpl`. Edit it and run `tofu apply`: the container reloads it by itself within about 15 seconds, without dropping connections (see [the reset how-to](docs/how-to/reload-the-haproxy-configuration.md), including how to check that HAProxy accepted it). Do not edit the file on the router, the next apply would overwrite it.
 
 The uploaded HAProxy configuration is adopted automatically (`import` block in `containers.tf`) because RouterOS file IDs shift when other files change.
 
@@ -83,14 +83,14 @@ The VLANs, IP addresses, bridges and bridge ports have `prevent_destroy`: a plan
 ## Conventions
 
 - Every object created by OpenTofu carries a comment starting with `tofu;;;`.
-- Firewall rules have a stable `id` and are placed on the router in list order by `routeros_move_items`. A rule with `before` sits right above the factory rule of that name in the same chain, the others go to the end of the chain. See [the runbook](docs/runbook-reset.md#firewall-rule-order).
+- Firewall rules have a stable `id` and are placed on the router in list order by `routeros_move_items`. A rule with `before` sits right above the factory rule of that name in the same chain, the others go to the end of the chain. See [the reset how-to](docs/how-to/reset-and-bootstrap-the-router.md#firewall-rule-order).
 - The state is local (`terraform.tfstate`, ignored by git) and encrypted with OpenTofu's native state encryption. Every command needs `source .env`, otherwise it stops with `Reference to undeclared key provider`. Keep a copy of the state after every apply.
 - All three Phorge repositories are public. Never commit `.env`, the state (not even encrypted), a reset-edited `base_configuration.rsc` or any other plaintext secret.
 - Commit messages follow Conventional Commits (`fix(fw): ...`, `chore(haproxy): ...`).
 
 ## Setting up the router for the first time
 
-Follow [the runbook](docs/runbook-reset.md). In short: replace the placeholders in `defaults/base_configuration.rsc`, reset the router with the factory defaults, upload `defaults/Phorge.dpk`, import the base configuration, then run OpenTofu.
+Follow [the reset how-to](docs/how-to/reset-and-bootstrap-the-router.md). In short: replace the placeholders in `defaults/base_configuration.rsc`, reset the router with the factory defaults, upload `defaults/Phorge.dpk`, import the base configuration, then run OpenTofu.
 
 ## Contributing
 
