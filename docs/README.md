@@ -8,14 +8,14 @@ Pages are grouped by what the reader wants, following [the organization's docume
 | --- | --- |
 | [Reset and bootstrap the router](how-to/reset-and-bootstrap-the-router.md) | Rebuild the router from scratch and bring it back under OpenTofu |
 | [Reload the HAProxy configuration](how-to/reload-the-haproxy-configuration.md) | Change a public route |
-| [Change the network](how-to/change-the-network.md) | Add a VLAN, a flow or a public hostname |
+| [Change the network](how-to/change-the-network.md) | Add a VLAN, a flow, or a public hostname |
 | [Remove factory rules from the state](how-to/remove-factory-rules-from-the-state.md) | Clear a plan that wants to delete the factory firewall rules |
 
 ## Reference
 
 | Page | Content |
 | --- | --- |
-| [Network plan](reference/network-plan.md) | Addresses, VLANs, wiring, hosts, public services and traffic flows |
+| [Network plan](reference/network-plan.md) | Addresses, VLANs, wiring, hosts, public services, and traffic flows |
 
 ## Explanation
 

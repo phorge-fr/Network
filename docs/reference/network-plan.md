@@ -53,7 +53,7 @@ Observed on 2026-09-20 from the link state and the bridge host table. Check it a
 | Port | Chip | State | What sits behind it |
 |---|---|---|---|
 | `ether1` | switch1 | 1 Gbps | ISP box 192.168.1.1 (WAN) |
-| `ether2` | switch1 | 1 Gbps | A switch carrying the control and core nodes, one Incus node and the GPU host |
+| `ether2` | switch1 | 1 Gbps | A switch carrying the control and core nodes, one Incus node, and the GPU host |
 | `ether3` | switch1 | 1 Gbps | Admin workstation |
 | `ether4` | switch1 | no link | Spare |
 | `ether5` | switch1 | 1 Gbps | Switch `main-sw-1` (192.168.2.252) with the storage node and the svc nodes behind it |
