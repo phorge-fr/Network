@@ -93,6 +93,7 @@ The storage node exports `/mnt/main/csi-svc` over NFSv4 to the three svc nodes a
 | `api.phorge.fr` | control | Phorge API (`/v1`, OpenAPI and Swagger UI only) | HAProxy, `traefik-public` 10.1.0.11 |
 | `cap.phorge.fr` | core | Cap (captcha of the Authentik sign-in, only `/assets` and the site key are public) | HAProxy, `traefik-public` 10.2.0.11 |
 | `git.phorge.fr` | svc | Forgejo | HAProxy, `traefik-public` 10.3.0.11 |
+| `console.phorge.fr` | svc | Phorge console (the frontend, not deployed yet) | HAProxy, `traefik-public` 10.3.0.11 |
 | `iaas.phorge.fr` | compute | Incus API and UI | HAProxy SNI routing to 10.10.0.1-3:8443 (rule `Allow Hproxy to Incus cluster API`, see [flows](#traffic-flows)) |
 | `prometheus.core.phorge`, `loki.core.phorge`, `openfga.core.phorge` | core | Prometheus, Loki, OpenFGA | `traefik-local` 10.2.0.10, internal CA, basic auth |
 | `crossview.control.phorge` | control | Crossview (Crossplane UI, authentik SSO) | `traefik-local` 10.1.0.10, internal CA |
