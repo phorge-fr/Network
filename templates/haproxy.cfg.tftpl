@@ -79,6 +79,9 @@ frontend http-dispatcher
     acl host_git hdr(host) -i git.phorge.fr
     http-request redirect scheme https code 301 if host_git
 
+    acl host_console hdr(host) -i console.phorge.fr
+    http-request redirect scheme https code 301 if host_console
+
     default_backend http-control-ingress
 
 frontend sni-dispatcher
@@ -101,5 +104,7 @@ frontend sni-dispatcher
     use_backend https-core-ingress if { req.ssl_sni -i cap.phorge.fr }
 
     use_backend https-svc-ingress if { req.ssl_sni -i git.phorge.fr }
+
+    use_backend https-svc-ingress if { req.ssl_sni -i console.phorge.fr }
 
     default_backend https-control-ingress
