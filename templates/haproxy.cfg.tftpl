@@ -64,9 +64,6 @@ frontend http-dispatcher
     acl host_auth hdr(host) -i auth.phorge.fr
     http-request redirect scheme https code 301 if host_auth
 
-    acl host_monitoring hdr(host) -i monitoring.phorge.fr
-    http-request redirect scheme https code 301 if host_monitoring
-
     acl host_status hdr(host) -i status.phorge.fr
     http-request redirect scheme https code 301 if host_status
 
@@ -94,8 +91,6 @@ frontend sni-dispatcher
     use_backend incus-cluster if { req.ssl_sni -i iaas.phorge.fr }
 
     use_backend https-core-ingress if { req.ssl_sni -i auth.phorge.fr }
-
-    use_backend https-core-ingress if { req.ssl_sni -i monitoring.phorge.fr }
 
     use_backend https-core-ingress if { req.ssl_sni -i status.phorge.fr }
 

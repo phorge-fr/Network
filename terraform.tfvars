@@ -48,6 +48,7 @@ dns_records = [
   { name = "loki.core.phorge", address = "10.2.0.10", type = "A" },
   { name = "openfga.core.phorge", address = "10.2.0.10", type = "A" },
   { name = "authentik.core.phorge", address = "10.2.0.10", type = "A" },
+  { name = "monitoring.core.phorge", address = "10.2.0.10", type = "A" },
   { name = "crossview.control.phorge", address = "10.1.0.10", type = "A" },
 ]
 
