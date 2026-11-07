@@ -88,7 +88,6 @@ The storage node exports `/mnt/main/csi-svc` over NFSv4 to the three svc nodes a
 | Hostname | Cluster | Service | Reached through |
 |---|---|---|---|
 | `auth.phorge.fr` | core | Authentik (OIDC SSO) | HAProxy, `traefik-public` 10.2.0.11 |
-| `monitoring.phorge.fr` | core | Grafana | HAProxy, `traefik-public` 10.2.0.11 |
 | `status.phorge.fr` | core | Uptime Kuma | HAProxy, `traefik-public` 10.2.0.11 |
 | `api.phorge.fr` | control | Phorge API (`/v1`, OpenAPI and Swagger UI only) | HAProxy, `traefik-public` 10.1.0.11 |
 | `cap.phorge.fr` | core | Cap (captcha of the Authentik sign-in, only `/assets` and the site key are public) | HAProxy, `traefik-public` 10.2.0.11 |
@@ -97,6 +96,7 @@ The storage node exports `/mnt/main/csi-svc` over NFSv4 to the three svc nodes a
 | `iaas.phorge.fr` | compute | Incus API and UI | HAProxy SNI routing to 10.10.0.1-3:8443 (rule `Allow Hproxy to Incus cluster API`, see [flows](#traffic-flows)) |
 | `prometheus.core.phorge`, `loki.core.phorge`, `openfga.core.phorge` | core | Prometheus, Loki, OpenFGA | `traefik-local` 10.2.0.10, internal CA, basic auth |
 | `authentik.core.phorge` | core | Authentik API, for the Crossplane provider on control | `traefik-local` 10.2.0.10, internal CA, API token |
+| `monitoring.core.phorge` | core | Grafana (operators only, Authentik sign-in) | `traefik-local` 10.2.0.10, internal CA |
 | `crossview.control.phorge` | control | Crossview (Crossplane UI, authentik SSO) | `traefik-local` 10.1.0.10, internal CA |
 
 Forgejo also serves Git over SSH on 10.3.0.13:22, internal only.
